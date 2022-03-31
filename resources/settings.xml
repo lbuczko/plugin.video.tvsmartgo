@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+    <category label="16000">
+        <setting label="1014" type="text" id="username" default=""/>
+        <setting label="15052" type="text" id="password" option="hidden" enable="!eq(-1,)" default=""/>
+    </category>
+    <category label="30001">
+        <setting label="30001" type="lsep"/>
+        <setting label="30003" type="text" id="vectra_file_name" default="vectratv.m3u"/>
+        <setting label="30004" type="folder" id="vectra_m3u_path" source="auto" option="writeable"/>
+        <!-- <setting type="action"
+                 action="RunPlugin(plugin://plugin.video.tvsmartgo/build_m3u)"
+                 label="30005"
+                 option="close"/> -->
+    </category>
+    <category label="24048">
+        <setting label="InputStream Helper information" type="action" action="RunScript(script.module.inputstreamhelper,info)"/>
+        <setting label="InputStream Helper settings..." type="action" action="Addon.OpenSettings(script.module.inputstreamhelper)" option="close"/>
+        <setting label="(Re)install Widevine CDM..." type="action" action="RunScript(script.module.inputstreamhelper,widevine_install)" visible="!system.platform.android"/>
+    </category>
+</settings>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.video.tvsmartgo" name="Vectra TV Smart GO" version="1.0.0" provider-name="heppen-dev, zuzia-dev">
+  <requires>
+    <import addon="xbmc.python" version="3.0.0"/>
+    <import addon="script.module.requests" />
+    <import addon="script.module.routing" />
+    <import addon="script.module.inputstreamhelper"/>
+  </requires>
+  <extension point="xbmc.python.pluginsource" library="main.py">
+    <provides>video</provides>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <description lang="en">Key Features:[CR]&#8226; Live channels - access to Vectra TV channels[CR]&#8226; Search - search for TV channels[CR]&#8226; Catchup - access to broadcast up to 7 days back[CR]&#8226; Favorite - list of your favorite TV channels[CR]&#8226; VOD - a library containing thousands of items</description>
+	<description lang="pl">Najważniejsze funkcje:[CR]&#8226; Kanały na żywo – dostęp do kanałów Vectra TV[CR]&#8226; Wyszukaj – wyszukiwanie kanałów TV[CR]&#8226; Catchup – dostęp do audycji do 7 dni wstecz[CR]&#8226; Ulubione – lista ulubionych kanałów TV[CR]&#8226; VOD – biblioteka zawierająca tysiące pozycji</description>
+	<summary lang="en">TV and VOD with Vectra TV Smart GO</summary>
+	<summary lang="pl">Telewizja i VOD z Vectra TV Smart GO</summary>
+	<disclaimer lang="en">This add-on is unofficial and is not endorsed or supported by Vectra. Any trademarks used belong to their owning companies and organisations.</disclaimer>
+	<disclaimer lang="pl">Ten dodatek jest nieoficjalny, nie jest wspierany ani popierany przez firmę Vectra. Wszelkie użyte znaki towarowe należą do firm i organizacji będących ich właścicielami.</disclaimer>
+	<language>en, pl</language>
+	<platform>all</platform>
+	<license>MIT</license>
+    <website>https://kodi-addons.pl</website>
+    <source>https://github.com/kpl-addons/plugin.video.vectra</source>
+    <news>Initial release</news>
+    <assets>
+        <icon>resources/icon.png</icon>
+        <fanart>resources/fanart.jpg</fanart>
+    </assets>
+  </extension>
+</addon>
