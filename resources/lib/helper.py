@@ -1,7 +1,7 @@
 import json
 import uuid
 import requests
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 import xbmc
 import xbmcgui
@@ -23,6 +23,7 @@ class Helper:
             self.token = self.get_setting('token')
             self.uuid = self.get_setting('uuid')
             self.subscribers = self.get_setting('subscribers')
+            self.subscribers = json.loads(unquote(self.subscribers)) if self.subscribers else ''
         except TypeError:
             self.token = self.set_setting('token', '')
             self.subscribers = self.set_setting('subscribers', '')
@@ -59,8 +60,23 @@ class Helper:
     def open_settings(self):
         xbmcaddon.Addon(self.addon_name).openSettings()
 
-    def add_item(self, title, url, folder=True):
+    def add_item(self, title, url, playable=False, info=None, art=None, content=None, folder=True):
         list_item = xbmcgui.ListItem(label=title)
+        if playable:
+            list_item.setProperty('IsPlayable', 'true')
+            folder = False
+        if art:
+            list_item.setArt(art)
+        else:
+            art = {
+                'icon': xbmcaddon.Addon().getAddonInfo('icon'),
+                'fanart': xbmcaddon.Addon().getAddonInfo('fanart')
+            }
+            list_item.setArt(art)
+        if info:
+            list_item.setInfo('Video', info)
+        if content:
+            xbmcplugin.setContent(self.handle, content)
         xbmcplugin.addDirectoryItem(self.handle, url, list_item, isFolder=folder)
 
     def eod(self, cache=True):
@@ -72,7 +88,7 @@ class Helper:
     def dialog_choice(self, heading, message, agree, disagree):
         return xbmcgui.Dialog().yesno(heading, message, yeslabel=agree, nolabel=disagree)
 
-    def make_request(self, url, method, params=None, payload=None, headers=None, verify=None):
+    def make_request(self, url, method, params=None, payload=None, headers=None, allow_redirects=None, verify=None, json=True):
         self.log(f'Request URL: {url}')
         self.log(f'Method: {method}')
         if params:
@@ -83,15 +99,18 @@ class Helper:
             self.log(f'Headers: {headers}')
 
         if method == 'get':
-            req = requests.get(url, params=params, headers=headers)
+            req = requests.get(url, params=params, headers=headers, allow_redirects=allow_redirects)
         elif method == 'put':
             req = requests.put(url, params=params, data=payload, headers=headers, verify=verify)
         else:  # post
             req = requests.post(url, params=params, json=payload, headers=headers)
-        self.log(f'Response code: {req.status_code}')
-        self.log(f'Response: {req.content}')
+        # self.log(f'Response code: {req.status_code}')
+        # self.log(f'Response: {req.content}')
 
-        return req.json()
+        if json:
+            return req.json()
+        else:
+            return req
 
     def create_device_id(self):
         dev_id = uuid.uuid1()
@@ -181,3 +200,20 @@ class Helper:
         if req.get('ok'):
             self.notification('Autoryzacja', 'Wylogowano')
             self.set_setting('password', '')
+
+    def play_video(self, stream_url, drm_protocol, drm, license_url):
+        from inputstreamhelper import Helper  # pylint: disable=import-outside-toplevel
+
+        play_item = xbmcgui.ListItem(path=stream_url)
+        if license_url:
+            is_helper = Helper(drm_protocol, drm=drm)
+            if is_helper.check_inputstream():
+                play_item.setProperty('inputstream', is_helper.inputstream_addon)
+                play_item.setMimeType('application/xml+dash')
+                play_item.setProperty('inputstream.adaptive.manifest_type', drm_protocol)
+                play_item.setProperty('inputstream.adaptive.license_type', drm)
+                play_item.setProperty('inputstream.adaptive.manifest_update_parameter', 'full')
+                play_item.setProperty('inputstream.adaptive.license_key', license_url)
+                play_item.setProperty('inputstream.adaptive.license_flags', "persistent_storage")
+                play_item.setContentLookup(False)
+        xbmcplugin.setResolvedUrl(self.handle, True, listitem=play_item)
