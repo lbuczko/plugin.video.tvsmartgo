@@ -1,8 +1,7 @@
 import json
 import uuid
-from urllib.parse import quote
-
 import requests
+from urllib.parse import quote
 
 import xbmc
 import xbmcgui
@@ -123,8 +122,6 @@ class Helper:
                                                          agree='TAK', disagree='NIE')
                         if user_choice:
                             self.swap_devices()
-                        else:
-                            xbmc.executebuiltin('Dialog.Close(all,true)')
                     return False
 
     def swap_devices(self):
@@ -184,4 +181,3 @@ class Helper:
         if req.get('ok'):
             self.notification('Autoryzacja', 'Wylogowano')
             self.set_setting('password', '')
-            self.log(f'================= PASSWORD : {self.get_setting("password")}')
