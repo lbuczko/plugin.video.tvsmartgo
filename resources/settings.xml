@@ -8,10 +8,10 @@
         <setting label="30001" type="lsep"/>
         <setting label="30003" type="text" id="vectra_file_name" default="vectratv.m3u"/>
         <setting label="30004" type="folder" id="vectra_m3u_path" source="auto" option="writeable"/>
-        <!-- <setting type="action"
+        <setting type="action"
                  action="RunPlugin(plugin://plugin.video.tvsmartgo/build_m3u)"
                  label="30005"
-                 option="close"/> -->
+                 option="close"/>
     </category>
     <category label="24048">
         <setting label="InputStream Helper information" type="action" action="RunScript(script.module.inputstreamhelper,info)"/>

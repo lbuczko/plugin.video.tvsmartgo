@@ -5,6 +5,7 @@ from urllib.parse import quote, unquote
 
 import xbmc
 import xbmcgui
+import xbmcvfs
 import xbmcaddon
 import xbmcplugin
 
@@ -217,3 +218,31 @@ class Helper:
                 play_item.setProperty('inputstream.adaptive.license_flags', "persistent_storage")
                 play_item.setContentLookup(False)
                 xbmcplugin.setResolvedUrl(self.handle, True, listitem=play_item)
+
+    def return_channels(self):
+        from resources.lib.addon import live_tv
+        return live_tv()
+
+    def export_m3u_playlist(self):
+        file = None
+        m3u_path = self.get_setting('vectra_m3u_path')
+        file_name = self.get_setting('vectra_file_name')
+
+        if not file_name or not m3u_path:
+            self.notification('Vectra Smart TV GO', 'Ustaw nazwę pliku i ścieżkę')
+            return
+
+        self.notification('Vectra Smart TV GO', 'Generuje listę')
+        data = '#EXTM3U\n'
+
+        for item in self.return_channels():
+            data += (
+                f'#EXTINF:0 tvg-id="{item["id"]}" tvg-logo="{item["logo"]}" group-title="Vectra TV",{item["title"]}\n'
+                f'plugin://plugin.video.tvsmartgo/channel_data/{item["id"]}\n')
+
+        try:
+            file = xbmcvfs.File(m3u_path + file_name, 'w')
+            file.write(data)
+        finally:
+            file.close()
+        self.notification('Vectra Smart TV GO', 'Lista m3u wygenerowana')

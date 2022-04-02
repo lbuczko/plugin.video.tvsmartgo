@@ -87,8 +87,15 @@ def open_settings():
     helper.open_settings()
 
 
+@plugin.route('/build_m3u')
+def build_m3u():
+    helper.export_m3u_playlist()
+
+
 def live_tv():
+    _title = None
     title = None
+    channels_list = []
     helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
     query = {
         'offset': 0,
@@ -121,8 +128,14 @@ def live_tv():
             info = {
                 'title': title
             }
+            channels_list.append({
+                'title': _title,
+                'id': channel_id,
+                'logo': channel_logo
+            })
             helper.add_item(title, plugin.url_for(channel_data, channel_id), playable=True, art=art, info=info)
         helper.eod()
+    return channels_list
 
 
 def vod_categories(section):
