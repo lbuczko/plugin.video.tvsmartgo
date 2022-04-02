@@ -149,6 +149,8 @@ def vod_categories(section):
             helper.add_item(title, plugin.url_for(vod_items, vod_id=id, page=1))
         elif section == 'SERIES_WEB':
             helper.add_item(title, plugin.url_for(series_items, vod_id=id, page=1))
+        elif section == 'KIDS_WEB':
+            helper.add_item(title, plugin.url_for(vod_items, vod_id=id, page=1))
     helper.eod()
 
 
