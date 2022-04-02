@@ -93,7 +93,6 @@ def build_m3u():
 
 
 def live_tv():
-    _title = None
     title = None
     channels_list = []
     helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
@@ -116,6 +115,11 @@ def live_tv():
                     _title = f'[B]{channel.get("title")}[/B]'
                     catchup_suffix = _title + ' [COLOR orange](catchup)[/COLOR]'
                     title = catchup_suffix if catch_up_active == 1 else _title
+                    channels_list.append({
+                        'title': channel.get('title'),
+                        'id': channel_id,
+                        'logo': channel_logo
+                    })
                 else:
                     _title = channel.get('title')
                     title_prefix = '[COLOR red][BRAK][/COLOR] ' + _title
@@ -128,11 +132,6 @@ def live_tv():
             info = {
                 'title': title
             }
-            channels_list.append({
-                'title': _title,
-                'id': channel_id,
-                'logo': channel_logo
-            })
             helper.add_item(title, plugin.url_for(channel_data, channel_id), playable=True, art=art, info=info)
         helper.eod()
     return channels_list
