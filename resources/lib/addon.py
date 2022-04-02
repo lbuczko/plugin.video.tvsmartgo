@@ -221,7 +221,7 @@ def get_data(product_id, channel_type, videoid=None, catchup=None):
 
             if license_url:
                 drm_protocol = 'mpd'
-                drm = 'widevine'
+                drm = 'com.widevine.alpha'
                 helper.play_video(stream_url=stream_url, drm_protocol=drm_protocol, drm=drm, license_url=license_url)
 
 
