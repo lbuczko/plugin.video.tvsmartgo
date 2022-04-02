@@ -62,9 +62,9 @@ def show_item(uuid):
     show_movie(uuid)
 
 
-@plugin.route('/vod_data/<channel_id>')
-def vod_data(channel_id):
-    get_data(product_id=channel_id, channel_type='channel')
+@plugin.route('/play_trailer/<uuid>/<ch_type>/<video_id>')
+def play_trailer(uuid, ch_type, video_id):
+    get_data(uuid, ch_type, video_id)
 
 
 @plugin.route('/settings')
@@ -150,7 +150,13 @@ def vod_movies(vod_id, page):
             else:
                 title = f'[B] {title} [/B]'
 
-        helper.add_item(title, plugin.url_for(show_item, uuid))
+        poster = item['images']['poster'][0]['url']
+        art = {
+            'icon': poster,
+            'fanart': poster
+        }
+
+        helper.add_item(title, plugin.url_for(show_item, uuid), art=art)
     helper.eod()
 
 
@@ -161,7 +167,25 @@ def show_movie(uuid):
     if not req.get('trailers'):
         helper.notification('Informacja', 'Brak zwiastuna')
     else:
-        get_data(product_id=uuid, channel_type='vod', videoid=req['trailers'][0].get('videoId'))
+        poster = req.get("images").get("poster")[0].get("url")
+        parent_uuid = req.get("parent_uuid")
+        if parent_uuid:
+            poster = f'https://api.tvonline.vectra.pl/assets/{parent_uuid}/poster'
+        metadata = req.get("metadata")
+        summary_long = metadata.get("summary_long")
+        title = metadata.get("title")
+        art = {
+            'icon': poster,
+            'fanart': poster
+        }
+        info = {
+            'title': title,
+            'plot': summary_long
+        }
+        helper.add_item(title + ' - [COLOR lightgreen][B]trailer[/B][/COLOR]',
+                        plugin.url_for(play_trailer, uuid, 'vod', req['trailers'][0].get('videoId')), playable=True,
+                        info=info, art=art)
+        helper.eod()
 
 
 def get_data(product_id, channel_type, videoid=None, catchup=None):
@@ -212,16 +236,16 @@ def get_data(product_id, channel_type, videoid=None, catchup=None):
         req_url = f'https://api.tvsmart.pl/player/product/{product_id}/playlist'
         get_playlist = helper.make_request(req_url, method='get', params=payload, headers=headers)
         if get_playlist:
+            license_url = get_playlist['drm'].get('WIDEVINE')
             stream_url = get_playlist['sources']['DASH'][0]['src']
             stream_url = 'https:' + stream_url if stream_url.startswith('//') else stream_url
-            license_url = get_playlist['drm'].get('WIDEVINE')
-            license_url = license_url + '|Content-Type=|R{SSM}|'
-            stream_url = helper.make_request(stream_url, method='get', allow_redirects=False, verify=False, json=False)
-            stream_url = stream_url.headers['Location']
+            stream_url = helper.make_request(stream_url, method='get', allow_redirects=True, verify=False, json=False)
+            stream_url = stream_url.url
 
             if license_url:
                 drm_protocol = 'mpd'
                 drm = 'com.widevine.alpha'
+
                 helper.play_video(stream_url=stream_url, drm_protocol=drm_protocol, drm=drm, license_url=license_url)
 
 

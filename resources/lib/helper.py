@@ -99,12 +99,12 @@ class Helper:
             self.log(f'Headers: {headers}')
 
         if method == 'get':
-            req = requests.get(url, params=params, headers=headers, allow_redirects=allow_redirects)
+            req = requests.get(url, params=params, headers=headers, allow_redirects=allow_redirects, verify=verify)
         elif method == 'put':
             req = requests.put(url, params=params, data=payload, headers=headers, verify=verify)
         else:  # post
             req = requests.post(url, params=params, json=payload, headers=headers)
-        # self.log(f'Response code: {req.status_code}')
+        self.log(f'Response code: {req.status_code}')
         # self.log(f'Response: {req.content}')
 
         if json:
@@ -213,7 +213,7 @@ class Helper:
                 play_item.setProperty('inputstream.adaptive.manifest_type', drm_protocol)
                 play_item.setProperty('inputstream.adaptive.license_type', drm)
                 play_item.setProperty('inputstream.adaptive.manifest_update_parameter', 'full')
-                play_item.setProperty('inputstream.adaptive.license_key', license_url)
+                play_item.setProperty('inputstream.adaptive.license_key', license_url + '||R{SSM}|')
                 play_item.setProperty('inputstream.adaptive.license_flags', "persistent_storage")
                 play_item.setContentLookup(False)
-        xbmcplugin.setResolvedUrl(self.handle, True, listitem=play_item)
+                xbmcplugin.setResolvedUrl(self.handle, True, listitem=play_item)
