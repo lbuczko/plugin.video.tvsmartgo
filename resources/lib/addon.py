@@ -19,9 +19,9 @@ def root():
     else:
         helper.add_item('Wyloguj', plugin.url_for(logout))
         helper.add_item('Telewizja', plugin.url_for(live))
-        helper.add_item('Filmy', plugin.url_for(login))
-        helper.add_item('Seriale', plugin.url_for(login))
-        helper.add_item('Dla dzieci', plugin.url_for(login))
+        helper.add_item('Filmy', plugin.url_for(vod, 'VOD_WEB'))
+        helper.add_item('Seriale', plugin.url_for(vod, 'SERIES_WEB'))
+        helper.add_item('Dla dzieci', plugin.url_for(vod, 'KIDS_WEB'))
         helper.add_item('Szukaj', plugin.url_for(login))
         helper.add_item('Ustawienia', plugin.url_for(open_settings))
         helper.eod(cache=False)
@@ -44,6 +44,26 @@ def live():
 
 @plugin.route('/channel_data/<channel_id>')
 def channel_data(channel_id):
+    get_data(product_id=channel_id, channel_type='channel')
+
+
+@plugin.route('/vod/<section>')
+def vod(section):
+    vod_categories(section=section)
+
+
+@plugin.route('/vod_items/<vod_id>/<page>')
+def vod_items(vod_id, page):
+    vod_movies(vod_id, page)
+
+
+@plugin.route('/show_movie/<uuid>')
+def show_item(uuid):
+    show_movie(uuid)
+
+
+@plugin.route('/vod_data/<channel_id>')
+def vod_data(channel_id):
     get_data(product_id=channel_id, channel_type='channel')
 
 
@@ -88,6 +108,60 @@ def live_tv():
             }
             helper.add_item(title, plugin.url_for(channel_data, channel_id), playable=True, art=art, info=info)
         helper.eod()
+
+
+def vod_categories(section):
+    helper.headers.update({'authorization': f'Bearer {helper.token}'})
+    url = f'https://{helper.api_subject}/sections/page/{section}?platform=BROWSER&system=tvonline'
+    req = helper.make_request(url, method='get', headers=helper.headers)
+
+    for category in req:
+        title = category.get('name')
+        id = category.get('id')
+        helper.add_item(title, plugin.url_for(vod_items, vod_id=id, page=1))
+    helper.eod()
+
+
+def vod_movies(vod_id, page):
+    helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
+    url = f'https://{helper.api_subject}/sections/{vod_id}/content?offset={page}&limit=24&platform=BROWSER&system=tvonline'
+
+    if 'subtype' and 'genre' in vod_id:
+        index = vod_id.replace('genre=', '').replace('subtype=', '')
+        subtype, genre = index.split('&')
+        url = f'https://{helper.api_subject}/products/{vod_id}?subtype={subtype}&genre={genre}&limit=24&offset={page}&platform=BROWSER&system=tvonline'
+    elif 'query' in vod_id:
+        query = vod_id.split('|')[-1]
+        url = f'https://{helper.api_subject}/products/search?q={query}&limit=100&offset={page}&platform=BROWSER&system=tvonline'
+
+    req = helper.make_request(url, method='get', headers=helper.headers)
+    data = req.get("data")
+    for item in data:
+        uuid = item.get("uuid")
+        title = item.get("title")
+        if item.get('prices'):
+            price = item.get('prices').get('rent').get('price')
+            period = item.get('prices').get('rent').get('period')
+            if price:
+                title_prefix = f'[B][COLOR red][{price / 100}0zł][/COLOR][/B] '
+                title_format = title_prefix + f'[B]{title}[/B]'
+                period = f' [B][COLOR orange]({period}H)[/COLOR][/B]'
+                title = title_format + period
+            else:
+                title = f'[B] {title} [/B]'
+
+        helper.add_item(title, plugin.url_for(show_item, uuid))
+    helper.eod()
+
+
+def show_movie(uuid):
+    helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
+    url = f'https://{helper.api_subject}/products/vod/{uuid}?platform=BROWSER&system=tvonline'
+    req = helper.make_request(url, method='get', headers=helper.headers)
+    if not req.get('trailers'):
+        helper.notification('Informacja', 'Brak zwiastuna')
+    else:
+        get_data(product_id=uuid, channel_type='vod', videoid=req['trailers'][0].get('videoId'))
 
 
 def get_data(product_id, channel_type, videoid=None, catchup=None):
@@ -140,14 +214,14 @@ def get_data(product_id, channel_type, videoid=None, catchup=None):
         if get_playlist:
             stream_url = get_playlist['sources']['DASH'][0]['src']
             stream_url = 'https:' + stream_url if stream_url.startswith('//') else stream_url
-            license_url = get_playlist.get('drm').get('WIDEVINE')
+            license_url = get_playlist['drm'].get('WIDEVINE')
             license_url = license_url + '|Content-Type=|R{SSM}|'
             stream_url = helper.make_request(stream_url, method='get', allow_redirects=False, verify=False, json=False)
             stream_url = stream_url.headers['Location']
 
             if license_url:
                 drm_protocol = 'mpd'
-                drm = 'com.widevine.alpha'
+                drm = 'widevine'
                 helper.play_video(stream_url=stream_url, drm_protocol=drm_protocol, drm=drm, license_url=license_url)
 
 
