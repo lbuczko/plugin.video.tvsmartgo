@@ -57,9 +57,24 @@ def vod_items(vod_id, page):
     vod_movies(vod_id, page)
 
 
+@plugin.route('/series_items/<vod_id>/<page>')
+def series_items(vod_id, page):
+    tv_shows(vod_id, page)
+
+
 @plugin.route('/show_movie/<uuid>')
 def show_item(uuid):
     show_movie(uuid)
+
+
+@plugin.route('/show_seasons/<uuid>')
+def show_seasons(uuid):
+    show_season_items(uuid)
+
+
+@plugin.route('/show_episodes/<uuid>')
+def show_episodes(uuid):
+    episode_items(uuid)
 
 
 @plugin.route('/play_trailer/<uuid>/<ch_type>/<video_id>')
@@ -118,7 +133,10 @@ def vod_categories(section):
     for category in req:
         title = category.get('name')
         id = category.get('id')
-        helper.add_item(title, plugin.url_for(vod_items, vod_id=id, page=1))
+        if section == 'VOD_WEB':
+            helper.add_item(title, plugin.url_for(vod_items, vod_id=id, page=1))
+        elif section == 'SERIES_WEB':
+            helper.add_item(title, plugin.url_for(series_items, vod_id=id, page=1))
     helper.eod()
 
 
@@ -156,7 +174,90 @@ def vod_movies(vod_id, page):
             'fanart': poster
         }
 
-        helper.add_item(title, plugin.url_for(show_item, uuid), art=art)
+        helper.add_item(title, plugin.url_for(show_item, uuid), art=art, content='movies')
+    helper.eod()
+
+
+def tv_shows(vod_id, page):
+    helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
+    url = f'https://{helper.api_subject}/sections/{vod_id}/content?offset={page}&limit=24&platform=BROWSER&system=tvonline'
+
+    if 'subtype' and 'genre' in vod_id:
+        index = vod_id.replace('genre=', '').replace('subtype=', '')
+        subtype, genre = index.split('&')
+        url = f'https://{helper.api_subject}/products/{vod_id}?subtype={subtype}&genre={genre}&limit=24&offset={page}&platform=BROWSER&system=tvonline'
+    elif 'query' in vod_id:
+        query = vod_id.split('|')[-1]
+        url = f'https://{helper.api_subject}/products/search?q={query}&limit=100&offset={page}&platform=BROWSER&system=tvonline'
+
+    req = helper.make_request(url, method='get', headers=helper.headers)
+    data = req.get("data")
+    for item in data:
+        uuid = item.get("uuid")
+        title = item.get("title")
+        if item.get('prices'):
+            price = item.get('prices').get('rent').get('price')
+            period = item.get('prices').get('rent').get('period')
+            if price:
+                title_prefix = f'[B][COLOR red][{price / 100}0zł][/COLOR][/B] '
+                title_format = title_prefix + f'[B]{title}[/B]'
+                period = f' [B][COLOR orange]({period}H)[/COLOR][/B]'
+                title = title_format + period
+            else:
+                title = f'[B] {title} [/B]'
+        info = {
+            'title': title
+        }
+        poster = item['images']['poster'][0]['url']
+        art = {
+            'icon': poster,
+            'fanart': poster
+        }
+
+        helper.add_item(title, plugin.url_for(show_seasons, uuid), info=info, art=art, content='tvshows')
+    helper.eod()
+
+
+def show_season_items(uuid):
+    helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
+    req_url = f'https://api.tvsmart.pl/products/series/{uuid}?platform=BROWSER&system=tvonline'
+    req = helper.make_request(req_url, method='get', headers=helper.headers)
+
+    for season in req['seasons']:
+        uuid = season.get('uuid')
+        title = season.get('title')
+        if title.endswith(','):
+            title = title[:-1] + ''
+        number = str(season.get('number'))
+        title = f'[B]{title}[/B] - sezon [{number}]'
+        poster = req['images']['poster'][0]['url']
+        summary_long = season.get('summary_long')
+        info = {
+            'title': title,
+            'plot': summary_long
+        }
+        art = {
+            'icon': poster,
+            'fanart': poster
+        }
+        helper.add_item(title, plugin.url_for(show_episodes, uuid), info=info, art=art, content='seasons')
+    helper.eod()
+
+
+def episode_items(uuid):
+    helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
+    req_url = f'https://api.tvsmart.pl/products/season/{uuid}?platform=BROWSER&system=tvonline'
+    req = helper.make_request(req_url, method='get', headers=helper.headers)
+
+    for episode in req['episodes']:
+        uuid = episode.get('uuid')
+        title = episode.get('title')
+        summary_short = episode.get('summary_short')
+        info = {
+            'title': title,
+            'plot': summary_short
+        }
+        helper.add_item(title, plugin.url_for(show_episodes, uuid), info=info, content='tvshows')
     helper.eod()
 
 
