@@ -89,6 +89,9 @@ class Helper:
     def dialog_choice(self, heading, message, agree, disagree):
         return xbmcgui.Dialog().yesno(heading, message, yeslabel=agree, nolabel=disagree)
 
+    def dialog_search(self):
+        return xbmcgui.Dialog().input('Wyszukiwanie')
+
     def make_request(self, url, method, params=None, payload=None, headers=None, allow_redirects=None, verify=None, json=True):
         self.log(f'Request URL: {url}')
         self.log(f'Method: {method}')

@@ -23,7 +23,7 @@ def root():
         helper.add_item('Filmy', plugin.url_for(vod, 'VOD_WEB'))
         helper.add_item('Seriale', plugin.url_for(vod, 'SERIES_WEB'))
         helper.add_item('Dla dzieci', plugin.url_for(vod, 'KIDS_WEB'))
-        helper.add_item('Szukaj', plugin.url_for(login))
+        helper.add_item('Szukaj', plugin.url_for(search))
         helper.add_item('Ustawienia', plugin.url_for(open_settings))
         helper.eod(cache=False)
 
@@ -96,6 +96,16 @@ def show_episodes(uuid):
 @plugin.route('/play_trailer/<uuid>/<ch_type>/<video_id>')
 def play_trailer(uuid, ch_type, video_id):
     get_data(uuid, ch_type, video_id)
+
+
+@plugin.route('/search')
+def search():
+    start_search()
+
+
+@plugin.route('/search_result')
+def search_result():
+    get_search_results()
 
 
 @plugin.route('/settings')
@@ -465,6 +475,34 @@ def get_data(product_id, channel_type, videoid=None, catchup=None):
                 drm = 'com.widevine.alpha'
 
                 helper.play_video(stream_url=stream_url, drm_protocol=drm_protocol, drm=drm, license_url=license_url)
+
+
+def start_search():
+    helper.add_item('Nowe wyszukiwanie', plugin.url_for(search_result))
+    helper.eod()
+
+def get_search_results():
+    query = helper.dialog_search()
+    helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
+    req_url = f'https://api.tvsmart.pl/products/search'
+    payload = {
+        'q': query,
+        'limit': 100,
+        'offset': 0,
+        'platform': 'BROWSER',
+        'system': 'tvonline'
+    }
+    req = helper.make_request(req_url, method='get', params=payload, headers=helper.headers)
+    for data in req.get('data'):
+        type = data.get('type')
+        uuid = data.get('uuid')
+        _title = data.get('title')
+        title = f'[B][COLOR orange][{type}][/COLOR][/B] {_title}'
+        if type == 'channel':
+            helper.add_item(title, plugin.url_for(channel_data, uuid), playable=True)
+        elif type == 'vod':
+            helper.add_item(title, plugin.url_for(show_item, uuid))
+    helper.eod()
 
 
 class Addon(Helper):
