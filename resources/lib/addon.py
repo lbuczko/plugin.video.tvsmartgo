@@ -320,8 +320,11 @@ def show_movie(uuid):
 
 
 def get_catchup(channel_uuid, channel_name):
+    info = {
+        'title': channel_name
+    }
     helper.add_item(f'{channel_name} - [B][COLOR lightgreen]LIVE[/COLOR][/B]',
-                    plugin.url_for(channel_data, channel_uuid), playable=True)
+                    plugin.url_for(channel_data, channel_uuid), playable=True, info=info)
     for index, day in enumerate(last_week()):
         helper.add_item(day['end'], plugin.url_for(catchup_programs, channel_uuid=channel_uuid, day=index))
     helper.eod()
