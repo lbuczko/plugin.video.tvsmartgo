@@ -2,6 +2,7 @@ import sys
 import routing
 from .helper import Helper
 from urllib.parse import parse_qsl
+from datetime import datetime, timedelta
 
 base_url = sys.argv[0]
 handle = int(sys.argv[1])
@@ -45,6 +46,21 @@ def live():
 @plugin.route('/channel_data/<channel_id>')
 def channel_data(channel_id):
     get_data(product_id=channel_id, channel_type='channel')
+
+
+@plugin.route('/catchup_week/<channel_id>/<channel_name>')
+def catchup_week(channel_id, channel_name):
+    get_catchup(channel_id, channel_name)
+
+
+@plugin.route('/catchup_programs/<channel_uuid>/<day>')
+def catchup_programs(channel_uuid, day):
+    list_catchup_programs(channel_uuid, day)
+
+
+@plugin.route('/play_program/<video_id>/<channel_id>')
+def play_program(video_id, channel_id):
+    get_data(product_id=channel_id, channel_type='channel', videoid=video_id, catchup=True)
 
 
 @plugin.route('/vod/<section>')
@@ -132,7 +148,7 @@ def live_tv():
             info = {
                 'title': title
             }
-            helper.add_item(title, plugin.url_for(channel_data, channel_id), playable=True, art=art, info=info)
+            helper.add_item(title, plugin.url_for(catchup_week, channel_id, channel.get('title')), art=art, info=info)
         helper.eod()
     return channels_list
 
@@ -301,6 +317,90 @@ def show_movie(uuid):
                         plugin.url_for(play_trailer, uuid, 'vod', req['trailers'][0].get('videoId')), playable=True,
                         info=info, art=art)
         helper.eod()
+
+
+def get_catchup(channel_uuid, channel_name):
+    helper.add_item(f'{channel_name} - [B][COLOR lightgreen]LIVE[/COLOR][/B]',
+                    plugin.url_for(channel_data, channel_uuid), playable=True)
+    for index, day in enumerate(last_week()):
+        helper.add_item(day['end'], plugin.url_for(catchup_programs, channel_uuid=channel_uuid, day=index))
+    helper.eod()
+
+
+def list_catchup_programs(channel_uuid, day):
+    art = None
+    last_days = last_week()
+    if day != 0:
+        start_date = last_days[int(day) - 1]['start_parsed']
+        end_date = last_days[int(day) - 1]['end_parsed']
+    else:
+        end_date = (datetime.today() + timedelta(hours=4)).strftime('%Y%m%d%H') + '0000'
+        start_date = datetime.today().strftime('%Y%m%d') + '000000'
+
+    helper.headers.update({'authorization': f'Bearer {helper.token}'})
+    params = {
+        'startDate': start_date,
+        'endDate': end_date,
+        'platform': 'BROWSER',
+        'system': 'tvonline'
+    }
+    response = helper.make_request(f'https://{helper.api_subject}/epg', method='get', headers=helper.headers,
+                                   params=params)
+
+    for data in response:
+        for program in data.get('programs'):
+            if program.get('channel_uuid') == channel_uuid:
+                since = string_to_date(program.get('since'), "%m-%d %H:%M")
+                till = string_to_date(program.get('till'), "%H:%M")
+                title_prefix = f'[B][COLOR orange][{since} - {till}][/COLOR][/B] '
+                title = title_prefix + f'[B]{program.get("title")}[/B]'
+                cover = program.get('images').get('cover')
+                video_id = program.get('uuid')
+                info = {
+                    'title': program.get('title'),
+                    'plot': program.get('description_short'),
+                }
+                if cover:
+                    art = {
+                        'icon': cover[0].get('url'),
+                        'fanart': cover[0].get('url')
+                    }
+                helper.add_item(title, plugin.url_for(play_program, program.get('channel_uuid'), video_id),
+                                playable=True, info=info, art=art)
+    helper.eod()
+
+
+def last_week():
+    days_list = []
+    days_range = range(7)
+    archive_day = []
+    date_now = datetime.today()
+
+    for day in days_range:
+        end = (date_now - timedelta(days=day)).strftime('%Y%m%d') + '000000'
+        start = (date_now - timedelta(days=day + 1)).strftime('%Y%m%d') + '000000'
+        archive_day.append({
+            'start': start,
+            'end': end
+        })
+
+    start_days = [(date_now - timedelta(days=idx, hours=-5)).strftime('%Y-%m-%d') for idx in days_range]
+    days = [(date_now - timedelta(days=idx)).strftime('%Y-%m-%d') for idx in days_range]
+    for index in days_range:
+        days_list.append({
+            'day': index,
+            'end': start_days[index],
+            'end_parsed': archive_day[index]['end'],
+            'start': days[index],
+            'start_parsed': archive_day[index]['start']
+        })
+    return days_list
+
+
+def string_to_date(string, format):
+    s_tuple = tuple([int(x) for x in string[:10].split('-')]) + tuple([int(x) for x in string[11:].split(':')])
+    s_to_datetime = datetime(*s_tuple).strftime(format)
+    return s_to_datetime
 
 
 def get_data(product_id, channel_type, videoid=None, catchup=None):
