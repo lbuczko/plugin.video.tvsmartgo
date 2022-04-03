@@ -117,6 +117,19 @@ class Helper:
         dev_id = uuid.uuid1()
         return self.set_setting('uuid', str(dev_id))
 
+    def user_logged_in(self):
+        req_url = f'https://api.tvsmart.pl/subscriber/products/uuids?platform=BROWSER&system=tvonline'
+        payload = {
+            'platform': 'BROWSER',
+            'system': 'tvonline'
+        }
+        self.headers.update({'authorization': f'Bearer {self.get_setting("token")}'})
+        req = self.make_request(req_url, method='get', payload=payload, headers=self.headers)
+        if req.get('data'):
+            return True
+        else:
+            self.user_login()
+
     def user_login(self):
         req_url = f'https://{self.api_subject}/subscriber/login?platform=BROWSER'
         payload = {"os": "Windows", "osVersion": "7", "maker": "unknown", "agent": "Firefox", "login": self.user_name,

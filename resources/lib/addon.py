@@ -13,7 +13,7 @@ plugin = routing.Plugin()
 
 @plugin.route('/')
 def root():
-    if not helper.user_login():
+    if not helper.user_logged_in():
         helper.add_item('Zaloguj', plugin.url_for(login))
         helper.add_item('Ustawienia', plugin.url_for(open_settings))
         helper.eod(cache=False)
