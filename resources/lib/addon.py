@@ -215,6 +215,7 @@ def vod_movies(vod_id, page):
         }
 
         helper.add_item(title, plugin.url_for(show_item, uuid), art=art, content='movies')
+    helper.add_item('Następna strona', plugin.url_for(vod_items, vod_id=vod_id, page=int(page) + 1))
     helper.eod()
 
 
@@ -255,6 +256,7 @@ def tv_shows(vod_id, page):
         }
 
         helper.add_item(title, plugin.url_for(show_seasons, uuid), info=info, art=art, content='tvshows')
+    helper.add_item('Następna strona', plugin.url_for(series_items, vod_id=vod_id, page=int(page) + 1))
     helper.eod()
 
 
