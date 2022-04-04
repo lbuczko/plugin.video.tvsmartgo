@@ -48,7 +48,8 @@ def channel_data(channel_id):
 
 @plugin.route('/catchup_week')
 def catchup_week():
-    get_catchup(channel_uuid=plugin.args['uuid'][0], channel_name=plugin.args['title'][0], channel_logo=plugin.args['url'][0])
+    get_catchup(channel_uuid=plugin.args['uuid'][0], channel_name=plugin.args['title'][0],
+                channel_logo=plugin.args['url'][0])
 
 
 @plugin.route('/catchup_programs/<channel_uuid>/<day>')
@@ -56,8 +57,8 @@ def catchup_programs(channel_uuid, day):
     list_catchup_programs(channel_uuid, day)
 
 
-@plugin.route('/play_program/<video_id>/<channel_id>')
-def play_program(video_id, channel_id):
+@plugin.route('/play_program/<channel_id>/<video_id>')
+def play_program(channel_id, video_id):
     get_data(product_id=channel_id, channel_type='channel', videoid=video_id, catchup=True)
 
 
@@ -394,7 +395,8 @@ def list_catchup_programs(channel_uuid, day):
                         'icon': cover[0].get('url'),
                         'fanart': cover[0].get('url')
                     }
-                helper.add_item(title, plugin.url_for(play_program, program.get('channel_uuid'), video_id),
+                helper.add_item(title,
+                                plugin.url_for(play_program, channel_id=program.get('channel_uuid'), video_id=video_id),
                                 playable=True, info=info, art=art)
     helper.eod()
 
