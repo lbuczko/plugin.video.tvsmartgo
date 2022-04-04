@@ -1,0 +1,3 @@
+v1.0.1
+    - Fixed channel logo in Live TV
+    - Fixed playing programs from catchup

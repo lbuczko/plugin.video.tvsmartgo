@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.tvsmartgo" name="Vectra TV Smart GO" version="1.0.0" provider-name="heppen-dev, zuzia-dev">
+<addon id="plugin.video.tvsmartgo" name="Vectra TV Smart GO" version="1.0.1" provider-name="heppen-dev, zuzia-dev">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="script.module.requests" />
@@ -21,7 +21,7 @@
 	<license>MIT</license>
     <website>https://kodi-addons.pl</website>
     <source>https://github.com/kpl-addons/plugin.video.vectra</source>
-    <news>Initial release</news>
+    <news>Fixed channel logo in Live TV[CR]Fixed playing programs from catchup</news>
     <assets>
         <icon>resources/icon.png</icon>
         <fanart>resources/fanart.jpg</fanart>
