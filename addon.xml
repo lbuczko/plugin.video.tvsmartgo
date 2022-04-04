@@ -20,7 +20,7 @@
 	<platform>all</platform>
 	<license>MIT</license>
     <website>https://kodi-addons.pl</website>
-    <source>https://github.com/kpl-addons/plugin.video.vectra</source>
+    <source>https://github.com/heppen-dev/plugin.video.tvsmartgo</source>
     <news>Fixed channel logo in Live TV[CR]Fixed playing programs from catchup</news>
     <assets>
         <icon>resources/icon.png</icon>
