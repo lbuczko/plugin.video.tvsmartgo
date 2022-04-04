@@ -194,10 +194,11 @@ def vod_movies(vod_id, page):
         url = f'https://{helper.api_subject}/products/search?q={query}&limit=100&offset={page}&platform=BROWSER&system=tvonline'
 
     req = helper.make_request(url, method='get', headers=helper.headers)
-    data = req.get("data")
+    data = req.get('data')
     for item in data:
-        uuid = item.get("uuid")
-        title = item.get("title")
+        uuid = item.get('uuid')
+        title = item.get('title')
+        short_desc = item.get('short_desc')
         if item.get('prices'):
             price = item.get('prices').get('rent').get('price')
             period = item.get('prices').get('rent').get('period')
@@ -219,8 +220,11 @@ def vod_movies(vod_id, page):
             art = {
                 'icon': helper.addon.getAddonInfo('icon')
             }
-
-        helper.add_item(title, plugin.url_for(show_item, uuid), art=art, content='movies')
+        info = {
+            'title': item.get('title'),
+            'plot': short_desc
+        }
+        helper.add_item(title, plugin.url_for(show_item, uuid), info=info, art=art, content='movies')
     helper.add_item('Następna strona', plugin.url_for(vod_items, vod_id=vod_id, page=int(page) + 1))
     helper.eod()
 
@@ -238,10 +242,11 @@ def tv_shows(vod_id, page):
         url = f'https://{helper.api_subject}/products/search?q={query}&limit=100&offset={page}&platform=BROWSER&system=tvonline'
 
     req = helper.make_request(url, method='get', headers=helper.headers)
-    data = req.get("data")
+    data = req.get('data')
     for item in data:
-        uuid = item.get("uuid")
-        title = item.get("title")
+        uuid = item.get('uuid')
+        title = item.get('title')
+        summary_short = item.get('summary_short')
         if item.get('prices'):
             price = item.get('prices').get('rent').get('price')
             period = item.get('prices').get('rent').get('period')
@@ -253,7 +258,8 @@ def tv_shows(vod_id, page):
             else:
                 title = f'[B] {title} [/B]'
         info = {
-            'title': title
+            'title': title,
+            'plot': summary_short
         }
         if item['images'].get('poster'):
             poster = item['images']['poster'][0]['url']
@@ -265,7 +271,6 @@ def tv_shows(vod_id, page):
             art = {
                 'icon': helper.addon.getAddonInfo('icon')
             }
-
         helper.add_item(title, plugin.url_for(show_seasons, uuid), info=info, art=art, content='tvshows')
     helper.add_item('Następna strona', plugin.url_for(series_items, vod_id=vod_id, page=int(page) + 1))
     helper.eod()
