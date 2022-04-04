@@ -208,11 +208,16 @@ def vod_movies(vod_id, page):
             else:
                 title = f'[B] {title} [/B]'
 
-        poster = item['images']['poster'][0]['url']
-        art = {
-            'icon': poster,
-            'fanart': poster
-        }
+        if item['images'].get('poster'):
+            poster = item['images']['poster'][0]['url']
+            art = {
+                'icon': poster,
+                'fanart': poster
+            }
+        else:
+            art = {
+                'icon': helper.addon.getAddonInfo('icon')
+            }
 
         helper.add_item(title, plugin.url_for(show_item, uuid), art=art, content='movies')
     helper.add_item('Następna strona', plugin.url_for(vod_items, vod_id=vod_id, page=int(page) + 1))
@@ -249,11 +254,16 @@ def tv_shows(vod_id, page):
         info = {
             'title': title
         }
-        poster = item['images']['poster'][0]['url']
-        art = {
-            'icon': poster,
-            'fanart': poster
-        }
+        if item['images'].get('poster'):
+            poster = item['images']['poster'][0]['url']
+            art = {
+                'icon': poster,
+                'fanart': poster
+            }
+        else:
+            art = {
+                'icon': helper.addon.getAddonInfo('icon')
+            }
 
         helper.add_item(title, plugin.url_for(show_seasons, uuid), info=info, art=art, content='tvshows')
     helper.add_item('Następna strona', plugin.url_for(series_items, vod_id=vod_id, page=int(page) + 1))

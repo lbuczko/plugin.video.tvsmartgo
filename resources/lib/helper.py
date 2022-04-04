@@ -14,6 +14,7 @@ class Helper:
     def __init__(self, base_url=None, handle=None):
         self.base_url = base_url
         self.handle = handle
+        self.addon = xbmcaddon.Addon()
         self.addon_name = xbmcaddon.Addon().getAddonInfo('id')
         self.addon_version = xbmcaddon.Addon().getAddonInfo('version')
         self.logging_prefix = f'===== [{self.addon_name} - {self.addon_version}] ====='
@@ -70,8 +71,8 @@ class Helper:
             list_item.setArt(art)
         else:
             art = {
-                'icon': xbmcaddon.Addon().getAddonInfo('icon'),
-                'fanart': xbmcaddon.Addon().getAddonInfo('fanart')
+                'icon': self.addon.getAddonInfo('icon'),
+                'fanart': self.addon.getAddonInfo('fanart')
             }
             list_item.setArt(art)
         if info:
