@@ -1,12 +1,10 @@
 import sys
 import routing
 from .helper import Helper
-from urllib.parse import parse_qsl
 from datetime import datetime, timedelta
 
 base_url = sys.argv[0]
 handle = int(sys.argv[1])
-params = dict(parse_qsl(sys.argv[2][1:]))
 helper = Helper(base_url, handle)
 plugin = routing.Plugin()
 
@@ -48,9 +46,9 @@ def channel_data(channel_id):
     get_data(product_id=channel_id, channel_type='channel')
 
 
-@plugin.route('/catchup_week/<channel_id>/<channel_name>')
-def catchup_week(channel_id, channel_name):
-    get_catchup(channel_id, channel_name)
+@plugin.route('/catchup_week')
+def catchup_week():
+    get_catchup(channel_uuid=plugin.args['uuid'][0], channel_name=plugin.args['title'][0], channel_logo=plugin.args['url'][0])
 
 
 @plugin.route('/catchup_programs/<channel_uuid>/<day>')
@@ -158,7 +156,9 @@ def live_tv():
             info = {
                 'title': title
             }
-            helper.add_item(title, plugin.url_for(catchup_week, channel_id, channel.get('title')), art=art, info=info)
+            helper.add_item(title,
+                            plugin.url_for(catchup_week, uuid=channel_id, title=channel.get('title'), url=channel_logo),
+                            art=art, info=info)
         helper.eod()
     return channels_list
 
@@ -341,12 +341,16 @@ def show_movie(uuid):
         helper.eod()
 
 
-def get_catchup(channel_uuid, channel_name):
+def get_catchup(channel_uuid, channel_name, channel_logo):
     info = {
         'title': channel_name
     }
+    art = {
+        'icon': channel_logo,
+        'fanart': channel_logo
+    }
     helper.add_item(f'{channel_name} - [B][COLOR lightgreen]LIVE[/COLOR][/B]',
-                    plugin.url_for(channel_data, channel_uuid), playable=True, info=info)
+                    plugin.url_for(channel_data, channel_uuid), playable=True, info=info, art=art)
     for index, day in enumerate(last_week()):
         helper.add_item(day['end'], plugin.url_for(catchup_programs, channel_uuid=channel_uuid, day=index))
     helper.eod()
