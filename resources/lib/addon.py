@@ -170,13 +170,13 @@ def vod_categories(section):
 
     for category in req:
         title = category.get('name')
-        id = category.get('id')
+        category_id = category.get('id')
         if section == 'VOD_WEB':
-            helper.add_item(title, plugin.url_for(vod_items, vod_id=id, page=1))
+            helper.add_item(title, plugin.url_for(vod_items, vod_id=category_id, page=1))
         elif section == 'SERIES_WEB':
-            helper.add_item(title, plugin.url_for(series_items, vod_id=id, page=1))
+            helper.add_item(title, plugin.url_for(series_items, vod_id=category_id, page=1))
         elif section == 'KIDS_WEB':
-            helper.add_item(title, plugin.url_for(vod_items, vod_id=id, page=1))
+            helper.add_item(title, plugin.url_for(vod_items, vod_id=category_id, page=1))
     helper.eod()
 
 
@@ -343,7 +343,7 @@ def get_catchup(channel_uuid, channel_name):
 def list_catchup_programs(channel_uuid, day):
     art = None
     last_days = last_week()
-    if day != 0:
+    if int(day) != 0:
         start_date = last_days[int(day) - 1]['start_parsed']
         end_date = last_days[int(day) - 1]['end_parsed']
     else:
@@ -351,14 +351,14 @@ def list_catchup_programs(channel_uuid, day):
         start_date = datetime.today().strftime('%Y%m%d') + '000000'
 
     helper.headers.update({'authorization': f'Bearer {helper.token}'})
-    params = {
+    req_params = {
         'startDate': start_date,
         'endDate': end_date,
         'platform': 'BROWSER',
         'system': 'tvonline'
     }
     response = helper.make_request(f'https://{helper.api_subject}/epg', method='get', headers=helper.headers,
-                                   params=params)
+                                   params=req_params)
 
     for data in response:
         for program in data.get('programs'):
@@ -410,9 +410,9 @@ def last_week():
     return days_list
 
 
-def string_to_date(string, format):
+def string_to_date(string, string_format):
     s_tuple = tuple([int(x) for x in string[:10].split('-')]) + tuple([int(x) for x in string[11:].split(':')])
-    s_to_datetime = datetime(*s_tuple).strftime(format)
+    s_to_datetime = datetime(*s_tuple).strftime(string_format)
     return s_to_datetime
 
 
@@ -481,6 +481,7 @@ def start_search():
     helper.add_item('Nowe wyszukiwanie', plugin.url_for(search_result))
     helper.eod()
 
+
 def get_search_results():
     query = helper.dialog_search()
     helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
@@ -494,13 +495,13 @@ def get_search_results():
     }
     req = helper.make_request(req_url, method='get', params=payload, headers=helper.headers)
     for data in req.get('data'):
-        type = data.get('type')
+        data_type = data.get('type')
         uuid = data.get('uuid')
         _title = data.get('title')
-        title = f'[B][COLOR orange][{type}][/COLOR][/B] {_title}'
-        if type == 'channel':
+        title = f'[B][COLOR orange][{data_type}][/COLOR][/B] {_title}'
+        if data_type == 'channel':
             helper.add_item(title, plugin.url_for(channel_data, uuid), playable=True)
-        elif type == 'vod':
+        elif data_type == 'vod':
             helper.add_item(title, plugin.url_for(show_item, uuid))
     helper.eod()
 
