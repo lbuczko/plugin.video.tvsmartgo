@@ -1,3 +1,6 @@
+v1.0.2
+    - Added xbmcplugin.SORT_METHOD_TITLE for livetv
+    - Added title and plot to info labels
 v1.0.1
     - Fixed channel logo in Live TV
     - Fixed playing programs from catchup
