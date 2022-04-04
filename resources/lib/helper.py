@@ -62,7 +62,7 @@ class Helper:
     def open_settings(self):
         xbmcaddon.Addon(self.addon_name).openSettings()
 
-    def add_item(self, title, url, playable=False, info=None, art=None, content=None, folder=True):
+    def add_item(self, title, url, playable=False, info=None, art=None, content=None, folder=True, livetv=False):
         list_item = xbmcgui.ListItem(label=title)
         if playable:
             list_item.setProperty('IsPlayable', 'true')
@@ -79,7 +79,11 @@ class Helper:
             list_item.setInfo('Video', info)
         if content:
             xbmcplugin.setContent(self.handle, content)
+
         xbmcplugin.addDirectoryItem(self.handle, url, list_item, isFolder=folder)
+
+        if livetv:
+            xbmcplugin.addSortMethod(handle=self.handle, sortMethod=xbmcplugin.SORT_METHOD_TITLE)
 
     def eod(self, cache=True):
         xbmcplugin.endOfDirectory(self.handle, cacheToDisc=cache)

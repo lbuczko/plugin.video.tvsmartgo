@@ -159,7 +159,7 @@ def live_tv():
             }
             helper.add_item(title,
                             plugin.url_for(catchup_week, uuid=channel_id, title=channel.get('title'), url=channel_logo),
-                            art=art, info=info)
+                            art=art, info=info, livetv=True)
         helper.eod()
     return channels_list
 
