@@ -1,3 +1,6 @@
+v1.0.3
+    - Remove duplicates from favorites
+    - Added option to add live tv channels to favorites
 v1.0.2
     - Added xbmcplugin.SORT_METHOD_TITLE for livetv
     - Added title and plot to info labels
