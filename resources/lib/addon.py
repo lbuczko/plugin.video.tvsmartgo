@@ -197,7 +197,7 @@ def favorites():
         with xbmcvfs.File(file) as f:
             buffer = f.read()
 
-        buffer = ast.literal_eval(buffer)
+        buffer = tuple(set(ast.literal_eval(buffer)))
 
         for item in buffer:
             channel = item[0]
