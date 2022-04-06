@@ -1,5 +1,9 @@
+import ast
+import json
 import sys
 import routing
+import xbmcvfs
+
 from .helper import Helper
 from datetime import datetime, timedelta
 
@@ -18,6 +22,7 @@ def root():
     else:
         helper.add_item('Wyloguj', plugin.url_for(logout))
         helper.add_item('Telewizja', plugin.url_for(live))
+        helper.add_item('Ulubione', plugin.url_for(list_favorites))
         helper.add_item('Filmy', plugin.url_for(vod, 'VOD_WEB'))
         helper.add_item('Seriale', plugin.url_for(vod, 'SERIES_WEB'))
         helper.add_item('Dla dzieci', plugin.url_for(vod, 'KIDS_WEB'))
@@ -39,6 +44,27 @@ def logout():
 @plugin.route('/live')
 def live():
     live_tv()
+
+
+@plugin.route('/live/list_favorites')
+def list_favorites():
+    favorites()
+
+
+@plugin.route('/live/add_favorite')
+def add_favorite():
+    helper.add_favorite(channel_name=plugin.args['channel_name'][0], channel_id=plugin.args['channel_id'][0],
+                        channel_logo=plugin.args['channel_logo'][0])
+
+
+@plugin.route('/live/read_favorites/<channel_id>')
+def read_favorites(channel_id):
+    get_data(product_id=channel_id, channel_type='channel')
+
+
+@plugin.route('/live/remove_favorites')
+def remove_favorites():
+    helper.remove_favorites()
 
 
 @plugin.route('/channel_data/<channel_id>')
@@ -162,6 +188,33 @@ def live_tv():
                             art=art, info=info, livetv=True)
         helper.eod()
     return channels_list
+
+
+def favorites():
+    file = xbmcvfs.translatePath(f'special://home/userdata/addon_data/{helper.addon_name}/favorites.txt')
+
+    try:
+        with xbmcvfs.File(file) as f:
+            buffer = f.read()
+
+        buffer = ast.literal_eval(buffer)
+
+        for item in buffer:
+            channel = item[0]
+            id = item[1]
+            info = {
+                'title': channel
+            }
+            art = {
+                'icon': item[2],
+                'fanart': item[2]
+            }
+            helper.add_item(channel, plugin.url_for(read_favorites, id), playable=True, info=info, art=art)
+        helper.add_item('Wyczyść ulubione', plugin.url_for(remove_favorites))
+        helper.eod()
+    except SyntaxError:
+        helper.add_item('Pusto', plugin.url_for(root))
+        helper.eod()
 
 
 def vod_categories(section):
@@ -357,6 +410,9 @@ def get_catchup(channel_uuid, channel_name, channel_logo):
     }
     helper.add_item(f'{channel_name} - [B][COLOR lightgreen]LIVE[/COLOR][/B]',
                     plugin.url_for(channel_data, channel_uuid), playable=True, info=info, art=art)
+    helper.add_item('Dodaj kanał do ulubionych',
+                    plugin.url_for(add_favorite, channel_name=channel_name, channel_id=channel_uuid,
+                                   channel_logo=channel_logo), info=info, art=art)
     for index, day in enumerate(last_week()):
         helper.add_item(day['end'], plugin.url_for(catchup_programs, channel_uuid=channel_uuid, day=index))
     helper.eod()

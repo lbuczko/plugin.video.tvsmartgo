@@ -97,6 +97,22 @@ class Helper:
     def dialog_search(self):
         return xbmcgui.Dialog().input('Wyszukiwanie')
 
+    def add_favorite(self, channel_name, channel_id, channel_logo):
+        file = xbmcvfs.translatePath(f'special://home/userdata/addon_data/{self.addon_name}/favorites.txt')
+        append = str((channel_name, channel_id, channel_logo)) + ','
+
+        with xbmcvfs.File(file) as f:
+            buffer = f.read()
+
+        with xbmcvfs.File(file, 'w') as f:
+            f.write(buffer + append)
+
+    def remove_favorites(self):
+        file = xbmcvfs.translatePath(f'special://home/userdata/addon_data/{self.addon_name}/favorites.txt')
+        xbmcvfs.delete(file)
+        self.notification('Informacja', 'Ulubione usunięte.')
+        return True
+
     def make_request(self, url, method, params=None, payload=None, headers=None, allow_redirects=None, verify=None, json=True):
         self.log(f'Request URL: {url}')
         self.log(f'Method: {method}')
