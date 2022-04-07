@@ -18,7 +18,7 @@ Any trademarks used belong to their owning companies & organisations.
 
 ## Installation & Updates ##
 Install add-on via repository - provide automatic installation of updates:
-Download repository: [repository.heppen](https://github.com/heppen-dev/plugin.video.tvsmartgo/archive/refs/tags/v1.0.0.zip)
+Download repository: [repository.heppen](https://github.com/heppen-dev/repository.heppen/raw/main/repository.heppen.zip)
 
 Or install it via Kodi file-manager
   - add source: https://heppen-dev.github.io/ or https://zips.ovh/heppen
