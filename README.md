@@ -1,12 +1,12 @@
 # Vectra TV Smart GO unofficial add-on for Kodi (plugin.video.tvsmartgo) #
 This is a Kodi add-on that allows you to stream content from Vectra in Kodi.
 
-Additional information about service TV Smart Go can be found in the [Vectra`s site](https://tvsmart.vectra.pl/)
+Additional information about service TV Smart Go can be found in the [Vectra`s site.](https://tvsmart.vectra.pl/)
 
 ## Disclaimer ##
 
 This plugin is not officially commisioned/supported by Vectra. 
-Any trademarks used belong to their owning companies & organisations.
+Any trademarks used belong to their owning companies & organisations. Use at Your Own Risk.
 
 ## Prerequisites ##
  * A devices compatible with Kodi
