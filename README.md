@@ -15,12 +15,14 @@ Any trademarks used belong to their owning companies & organisations. Use at You
  * InputStream Adaptive add-on
  * InputStream Helper add-on
  * Widevine CDM library
+ 
+ NOTICE: This plugin is not compatible with Kodi 18 (Leia). We highly recommend upgrading to Kodi 19 (Matrix).
 
 ## Installation & Updates ##
 Install add-on via repository - provide automatic installation of updates:
 Download repository: [repository.heppen](https://github.com/heppen-dev/repository.heppen/raw/main/repository.heppen.zip)
 
-Or install it via Kodi file-manager
+Or install it via Kodi file-manager:
   - add source: https://heppen-dev.github.io/ or https://zips.ovh/heppen
 
 Install add-on manually - updates should always be installed manually:
