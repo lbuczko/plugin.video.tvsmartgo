@@ -144,7 +144,6 @@ def build_m3u():
 
 
 def live_tv():
-    title = None
     channels_list = []
     helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
     query = {
@@ -157,6 +156,7 @@ def live_tv():
                               headers=helper.headers, params=query)
     if req.get('data'):
         for channel in req.get('data'):
+            title = channel.get('title')
             avail_in = channel.get('available_in')
             channel_id = channel.get('uuid')
             channel_logo = channel.get('images').get('logo')[0].get('url')
@@ -171,6 +171,7 @@ def live_tv():
                         'id': channel_id,
                         'logo': channel_logo
                     })
+                    break
                 else:
                     _title = channel.get('title')
                     title_prefix = '[COLOR red][BRAK][/COLOR] ' + _title
