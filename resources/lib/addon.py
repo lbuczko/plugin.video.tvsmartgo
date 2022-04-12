@@ -26,6 +26,8 @@ def root():
         helper.add_item('Filmy', plugin.url_for(vod, 'VOD_WEB'))
         helper.add_item('Seriale', plugin.url_for(vod, 'SERIES_WEB'))
         helper.add_item('Dla dzieci', plugin.url_for(vod, 'KIDS_WEB'))
+        helper.add_item('Aktywne wypożyczenia', plugin.url_for(vod_active))
+        helper.add_item('Historia wypożyczeń', plugin.url_for(vod_history))
         helper.add_item('Szukaj', plugin.url_for(search))
         helper.add_item('Ustawienia', plugin.url_for(open_settings))
         helper.eod(cache=False)
@@ -123,6 +125,11 @@ def play_trailer(uuid, ch_type, video_id):
     get_data(uuid, ch_type, video_id)
 
 
+@plugin.route('/play_vod/<uuid>')
+def play_vod(uuid):
+    get_data(product_id=uuid, channel_type='vod')
+
+
 @plugin.route('/search')
 def search():
     start_search()
@@ -141,6 +148,76 @@ def open_settings():
 @plugin.route('/build_m3u')
 def build_m3u():
     helper.export_m3u_playlist()
+
+
+@plugin.route('/vod_active')
+def vod_active():
+    helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
+    query = {
+        'platform': 'BROWSER',
+        'system': 'tvonline'
+    }
+    req = helper.make_request(f'https://{helper.api_subject}/subscriber/products', method='get', headers=helper.headers,
+                              params=query)
+
+    for item in req.get('data'):
+        _title = item.get('title')
+        description = item.get('short_desc')
+        year = item.get('year')
+        uuid = item.get('uuid')
+        cover = item['images']['cover'][0].get('url')
+        poster = item['images']['poster'][0].get('url')
+
+        expires_at = item.get('expires_at')
+
+        title = f'[B]{_title}[/B] do [COLOR orange]{expires_at}[/COLOR]'
+
+        info = {
+            'title': _title,
+            'plot': description,
+            'year': year
+        }
+
+        art = {
+            'icon': poster,
+            'fanart': cover,
+            'poster': poster
+        }
+
+        helper.add_item(title, plugin.url_for(play_vod, uuid=uuid), playable=True, info=info, art=art, content='movies')
+
+    helper.eod()
+
+
+@plugin.route('/vod_history')
+def vod_history():
+    helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
+    query = {
+        'order[0][column]': 8,
+        'order[0][dir]': 'desc',
+        'platform': 'BROWSER',
+        'system': 'tvonline'
+    }
+    req = helper.make_request(f'https://{helper.api_subject}/subscriber/payments', method='get', headers=helper.headers,
+                              params=query)
+
+    for item in req.get('data'):
+        _title = item.get('product_title')
+        uuid = item.get('product_uuid')
+        price = item.get('price') / 100
+        created_at = item.get('created_at')
+        expiration_date = item.get('expiration_date')
+
+        price = f'[COLOR red][{price:.2f} zł] [/COLOR]'
+        title = f'{price}[B]{_title}[/B] od [COLOR orange]{created_at}[/COLOR] do [COLOR orange]{expiration_date}[/COLOR]'
+
+        info = {
+            'title': _title
+        }
+
+        helper.add_item(title, plugin.url_for(play_vod, uuid=uuid), playable=True, info=info)
+
+    helper.eod()
 
 
 def live_tv():
