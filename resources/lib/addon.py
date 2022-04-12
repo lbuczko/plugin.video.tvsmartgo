@@ -681,7 +681,10 @@ def get_data(product_id, channel_type, videoid=None, catchup=None):
     video_session_id = get_product.get("videoSession")
     if 'errorCode' in get_product:
         msg = get_product.get('errorCode', None)
-        helper.notification('Błąd', f'[B]{msg}[/B]')
+        if msg == 'SUBSCRIBER_PARALLEL_STREAMS_LIMIT_EXCEEDED':
+            helper.notification('Błąd', f'[B]Przekroczono ilość połączeń. Spróbuj ponownie za 10 minut.[/B]')
+        else:
+            helper.notification('Błąd', f'[B]{msg}[/B]')
     else:
         if video_session_id:
             video_session_id = video_session_id.get("videoSessionId")

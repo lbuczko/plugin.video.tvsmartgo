@@ -89,7 +89,7 @@ class Helper:
         xbmcplugin.endOfDirectory(self.handle, cacheToDisc=cache)
 
     def notification(self, heading, message):
-        xbmcgui.Dialog().notification(heading, message, time=5000)
+        xbmcgui.Dialog().notification(heading, message, time=7000)
 
     def dialog_choice(self, heading, message, agree, disagree):
         return xbmcgui.Dialog().yesno(heading, message, yeslabel=agree, nolabel=disagree)
@@ -248,11 +248,10 @@ class Helper:
             if is_helper.check_inputstream():
                 play_item.setProperty('inputstream', is_helper.inputstream_addon)
                 play_item.setMimeType('application/xml+dash')
+                play_item.setProperty('inputstream.adaptive.max_bandwidth', '99999999')
                 play_item.setProperty('inputstream.adaptive.manifest_type', drm_protocol)
                 play_item.setProperty('inputstream.adaptive.license_type', drm)
-                play_item.setProperty('inputstream.adaptive.manifest_update_parameter', 'full')
                 play_item.setProperty('inputstream.adaptive.license_key', license_url + '||R{SSM}|')
-                play_item.setProperty('inputstream.adaptive.license_flags', "persistent_storage")
                 play_item.setContentLookup(False)
                 xbmcplugin.setResolvedUrl(self.handle, True, listitem=play_item)
 
