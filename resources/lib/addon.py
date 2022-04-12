@@ -22,6 +22,7 @@ def root():
     else:
         helper.add_item('Wyloguj', plugin.url_for(logout))
         helper.add_item('Telewizja', plugin.url_for(live))
+        helper.add_item('Kategorie TV', plugin.url_for(tv_categories))
         helper.add_item('Ulubione', plugin.url_for(list_favorites))
         helper.add_item('Filmy', plugin.url_for(vod, 'VOD_WEB'))
         helper.add_item('Seriale', plugin.url_for(vod, 'SERIES_WEB'))
@@ -46,6 +47,16 @@ def logout():
 @plugin.route('/live')
 def live():
     live_tv()
+
+
+@plugin.route('/tv_categories')
+def tv_categories():
+    list_channel_categories()
+
+
+@plugin.route('/list_category_tv/<cat_id>/<slug>')
+def list_category_tv(cat_id, slug):
+    list_category(cat_id, slug)
 
 
 @plugin.route('/live/list_favorites')
@@ -266,6 +277,68 @@ def live_tv():
                             art=art, info=info, livetv=True)
         helper.eod()
     return channels_list
+
+
+def list_category(cat_id, slug):
+    helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
+    query = {
+        'offset': 0,
+        'limit': 300,
+        'platform': 'BROWSER',
+        'system': 'tvonline'
+    }
+    req = helper.make_request(f'https://{helper.api_subject}/products/channel', method='get',
+                              headers=helper.headers, params=query)
+    if req.get('data'):
+        for channel in req.get('data'):
+            title = channel.get('title')
+            avail_in = channel.get('available_in')
+            channel_id = channel.get('uuid')
+            genres_id = channel['genres'][0].get('id')
+            genres_slug = channel['genres'][0].get('slug')
+            channel_logo = channel.get('images').get('logo')[0].get('url')
+            catch_up_active = channel.get('context').get('catch_up_active')
+            if int(genres_id) == int(cat_id) and genres_slug == slug:
+                for subscriber in helper.subscribers:
+                    if subscriber in avail_in:
+                        _title = f'[B]{channel.get("title")}[/B]'
+                        catchup_suffix = _title + ' [COLOR orange](catchup)[/COLOR]'
+                        title = catchup_suffix if catch_up_active == 1 else _title
+                        break
+                    else:
+                        _title = channel.get('title')
+                        title_prefix = '[COLOR red][BRAK][/COLOR] ' + _title
+                        catchup_suffix = title_prefix + ' (catchup)'
+                        title = catchup_suffix if catch_up_active == 1 else title_prefix
+                art = {
+                    'icon': channel_logo,
+                    'fanart': channel_logo
+                }
+                info = {
+                    'title': title
+                }
+                helper.add_item(title,
+                                plugin.url_for(catchup_week, uuid=channel_id, title=channel.get('title'), url=channel_logo),
+                                art=art, info=info, livetv=True)
+        helper.eod()
+
+
+def list_channel_categories():
+    helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
+    query = {
+        'platform': 'BROWSER',
+        'system': 'tvonline'
+    }
+    req = helper.make_request(f'https://{helper.api_subject}/products/genres/channel', method='get',
+                              headers=helper.headers, params=query)
+
+    for category in req.get('data'):
+        cat_id = category.get('id')
+        name = category.get('name')
+        slug = category.get('slug')
+
+        helper.add_item(name, plugin.url_for(list_category_tv, cat_id, slug))
+    helper.eod()
 
 
 def favorites():
