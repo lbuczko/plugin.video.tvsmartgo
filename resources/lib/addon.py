@@ -683,6 +683,8 @@ def get_data(product_id, channel_type, videoid=None, catchup=None):
         msg = get_product.get('errorCode', None)
         if msg == 'SUBSCRIBER_PARALLEL_STREAMS_LIMIT_EXCEEDED':
             helper.notification('Błąd', f'[B]Przekroczono ilość połączeń. Spróbuj ponownie za 10 minut.[/B]')
+        elif msg == 'MUST_BE_IN_LOCAL':
+            helper.notification('Błąd', f'[B]Niedostępne poza siecią Vectra.[/B]')
         else:
             helper.notification('Błąd', f'[B]{msg}[/B]')
     else:
