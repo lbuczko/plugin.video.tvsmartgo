@@ -26,7 +26,7 @@ Or install it via Kodi file-manager:
   - add source: https://heppen-dev.github.io/ or https://zips.ovh/heppen
 
 Install add-on manually - updates should always be installed manually:
-- [plugin tvsmartgo](https://github.com/heppen-dev/plugin.video.tvsmartgo/archive/refs/tags/v1.0.0.zip)
+- [plugin tvsmartgo](https://github.com/heppen-dev/plugin.video.tvsmartgo/archive/refs/heads/master.zip )
 
 ## DRM protected streams ##
 Vectra's content is DRM protected and requires the proprietary decryption module Widevine CDM for playback. You will be prompted to install this if you're starting the addon without the binary installed.
