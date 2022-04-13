@@ -2,8 +2,9 @@
 <addon id="plugin.video.tvsmartgo" name="Vectra TV Smart GO" version="1.0.3" provider-name="heppen-dev, zuzia-dev">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
-    <import addon="script.module.requests" />
+    <import addon="script.module.iso8601" />
     <import addon="script.module.routing" />
+    <import addon="script.module.requests" />
     <import addon="script.module.inputstreamhelper"/>
   </requires>
   <extension point="xbmc.python.pluginsource" library="main.py">

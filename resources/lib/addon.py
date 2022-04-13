@@ -16,13 +16,13 @@ plugin = routing.Plugin()
 @plugin.route('/')
 def root():
     if not helper.user_logged_in():
-        helper.add_item('Zaloguj', plugin.url_for(login))
         helper.add_item('Ustawienia', plugin.url_for(open_settings))
+        helper.add_item('Zaloguj', plugin.url_for(login))
         helper.eod(cache=False)
     else:
-        helper.add_item('Wyloguj', plugin.url_for(logout))
         helper.add_item('Telewizja', plugin.url_for(live))
-        helper.add_item('Kategorie TV', plugin.url_for(tv_categories))
+        helper.add_item('Telewizja z EPG', plugin.url_for(epg_live))
+        helper.add_item('Kategorie kanałów TV', plugin.url_for(tv_categories))
         helper.add_item('Ulubione', plugin.url_for(list_favorites))
         helper.add_item('Filmy', plugin.url_for(vod, 'VOD_WEB'))
         helper.add_item('Seriale', plugin.url_for(vod, 'SERIES_WEB'))
@@ -31,6 +31,7 @@ def root():
         helper.add_item('Historia wypożyczeń', plugin.url_for(vod_history))
         helper.add_item('Szukaj', plugin.url_for(search))
         helper.add_item('Ustawienia', plugin.url_for(open_settings))
+        helper.add_item('Wyloguj', plugin.url_for(logout))
         helper.eod(cache=False)
 
 
@@ -47,6 +48,11 @@ def logout():
 @plugin.route('/live')
 def live():
     live_tv()
+
+
+@plugin.route('/epg_live')
+def epg_live():
+    epg_tv()
 
 
 @plugin.route('/tv_categories')
@@ -88,7 +94,7 @@ def channel_data(channel_id):
 @plugin.route('/catchup_week')
 def catchup_week():
     get_catchup(channel_uuid=plugin.args['uuid'][0], channel_name=plugin.args['title'][0],
-                channel_logo=plugin.args['url'][0])
+                channel_logo=plugin.args['url'][0], info=plugin.args['info'][0])
 
 
 @plugin.route('/catchup_programs/<channel_uuid>/<day>')
@@ -273,10 +279,101 @@ def live_tv():
                 'title': title
             }
             helper.add_item(title,
-                            plugin.url_for(catchup_week, uuid=channel_id, title=channel.get('title'), url=channel_logo),
-                            art=art, info=info, livetv=True)
+                            plugin.url_for(catchup_week, uuid=channel_id, title=channel.get('title'), url=channel_logo,
+                                           info=info), art=art, info=info, livetv=True)
         helper.eod()
+
     return channels_list
+
+
+def epg_tv():
+    helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
+    query = {
+        'offset': 0,
+        'limit': 300,
+        'platform': 'BROWSER',
+        'system': 'tvonline'
+    }
+    req = helper.make_request(f'https://{helper.api_subject}/products/channel', method='get',
+                              headers=helper.headers, params=query)
+
+    current_day_list = current_day()[0]
+    epg_start = current_day_list['start']
+    epg_end = current_day_list['end']
+
+    epg_list = []
+    epg_title = None
+    epg_plot = None
+    actual_title = None
+
+    now = datetime.now()
+
+    epg_params = {
+        'startDate': epg_start,
+        'endDate': epg_end,
+        'platform': 'BROWSER',
+        'system': 'tvonline'
+    }
+
+    req_epg = helper.make_request(f'https://{helper.api_subject}/epg', method='get', params=epg_params,
+                                  headers=helper.headers)
+
+    for epg in req_epg:
+        for program in epg['programs']:
+            start_time = program['since']
+            end_time = program['till']
+            start_time_obj = helper.parse_datetime(start_time).replace(tzinfo=None)
+            end_time_obj = helper.parse_datetime(end_time).replace(tzinfo=None)
+
+            if start_time_obj <= now < end_time_obj:
+                epg_list.append({
+                    'channel_uuid': program['channel_uuid'],
+                    'title': program['title'],
+                    'plot': program['description_short']
+                })
+
+    if req.get('data'):
+        for channel in req.get('data'):
+            title = channel.get('title')
+            avail_in = channel.get('available_in')
+            channel_id = channel.get('uuid')
+            channel_logo = channel.get('images').get('logo')[0].get('url')
+            catch_up_active = channel.get('context').get('catch_up_active')
+            for subscriber in helper.subscribers:
+                if subscriber in avail_in:
+                    for epg in epg_list:
+                        if channel_id == epg['channel_uuid']:
+                            epg_title = epg['title']
+                            epg_plot = epg['plot']
+                            break
+                    _title = channel.get('title')
+                    title = f'[B]{_title}[/B] | {epg_title}'
+                    catchup_active = f'[LIGHT][CATCHUP][/LIGHT] [B]{_title}[/B] | {epg_title}'
+                    actual_title = catchup_active if catch_up_active == 1 else title
+                    break
+                else:
+                    for epg in epg_list:
+                        if channel_id == epg['channel_uuid']:
+                            epg_title = epg['title']
+                            epg_plot = epg['plot']
+                            break
+                    _title = channel.get('title')
+                    title_prefix = '[LIGHT][CATCHUP][/LIGHT] [COLOR red][BRAK][/COLOR]'
+                    title = f'{title_prefix} [B]{_title}[/B] | {epg_title}'
+                    catchup_active = f'{title}'
+                    actual_title = catchup_active if catch_up_active == 1 else title
+            art = {
+                'icon': channel_logo,
+                'fanart': channel_logo
+            }
+            info = {
+                'title': actual_title,
+                'plot': epg_plot
+            }
+            helper.add_item(actual_title,
+                            plugin.url_for(catchup_week, uuid=channel_id, title=channel.get('title'), url=channel_logo,
+                                           info=info), art=art, info=info, livetv=True)
+        helper.eod()
 
 
 def list_category(cat_id, slug):
@@ -318,8 +415,8 @@ def list_category(cat_id, slug):
                     'title': title
                 }
                 helper.add_item(title,
-                                plugin.url_for(catchup_week, uuid=channel_id, title=channel.get('title'), url=channel_logo),
-                                art=art, info=info, livetv=True)
+                                plugin.url_for(catchup_week, uuid=channel_id, title=channel.get('title'),
+                                               url=channel_logo, info=info), art=art, info=info, livetv=True)
         helper.eod()
 
 
@@ -551,9 +648,11 @@ def show_movie(uuid):
         helper.eod()
 
 
-def get_catchup(channel_uuid, channel_name, channel_logo):
+def get_catchup(channel_uuid, channel_name, channel_logo, info):
+    info = ast.literal_eval(info)
     info = {
-        'title': channel_name
+        'title': info['title'],
+        'plot': info.get('plot')
     }
     art = {
         'icon': channel_logo,
@@ -611,6 +710,19 @@ def list_catchup_programs(channel_uuid, day):
                                 plugin.url_for(play_program, channel_id=program.get('channel_uuid'), video_id=video_id),
                                 playable=True, info=info, art=art)
     helper.eod()
+
+
+def current_day():
+    current_day = []
+    date_now = datetime.today()
+
+    start = (date_now - timedelta(days=0)).strftime('%Y%m%d') + '000000'
+    end = (date_now - timedelta(days=-1)).strftime('%Y%m%d') + '000000'
+    current_day.append({
+        'start': start,
+        'end': end
+    })
+    return current_day
 
 
 def last_week():
