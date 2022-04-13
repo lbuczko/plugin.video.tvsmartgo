@@ -814,6 +814,8 @@ def get_data(product_id, channel_type, videoid=None, catchup=None):
             helper.notification('Błąd', f'[B]Przekroczono ilość połączeń. Spróbuj ponownie za 10 minut.[/B]')
         elif msg == 'MUST_BE_IN_LOCAL':
             helper.notification('Błąd', f'[B]Niedostępne poza siecią Vectra.[/B]')
+        elif msg == 'RESOURCE_NOT_IN_SUBSCRIBER_PRODUCTS':
+            helper.notification('Błąd', f'[B]Nie subskrybujesz tego kanału.[/B]')
         else:
             helper.notification('Błąd', f'[B]{msg}[/B]')
     else:
