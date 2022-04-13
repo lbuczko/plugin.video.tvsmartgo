@@ -239,6 +239,7 @@ def vod_history():
 
 def live_tv():
     channels_list = []
+    sort_title = None
     helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
     query = {
         'offset': 0,
@@ -257,9 +258,11 @@ def live_tv():
             catch_up_active = channel.get('context').get('catch_up_active')
             for subscriber in helper.subscribers:
                 if subscriber in avail_in:
-                    _title = f'[B]{channel.get("title")}[/B]'
-                    catchup_suffix = _title + ' [COLOR orange](catchup)[/COLOR]'
-                    title = catchup_suffix if catch_up_active == 1 else _title
+                    _title = channel.get('title')
+                    title = f'[B][COLOR orange]{_title}[/COLOR][/B]'
+                    catchup_active = f'[B][COLOR orange]{_title}[/COLOR][/B] [LIGHT][CATCHUP][/LIGHT]'
+                    actual_title = catchup_active if catch_up_active == 1 else title
+                    sort_title = channel.get('title')
                     channels_list.append({
                         'title': channel.get('title'),
                         'id': channel_id,
@@ -268,17 +271,20 @@ def live_tv():
                     break
                 else:
                     _title = channel.get('title')
-                    title_prefix = '[COLOR red][BRAK][/COLOR] ' + _title
-                    catchup_suffix = title_prefix + ' (catchup)'
-                    title = catchup_suffix if catch_up_active == 1 else title_prefix
+                    title_prefix = '[COLOR red][BRAK][/COLOR]'
+                    title = f'{title_prefix} [B][COLOR orange]{_title}[/COLOR][/B] [LIGHT][CATCHUP][/LIGHT]'
+                    catchup_active = f'{title}'
+                    actual_title = catchup_active if catch_up_active == 1 else title
+                    sort_title = f'ZZZzzz... {channel.get("title")}'
             art = {
                 'icon': channel_logo,
                 'fanart': channel_logo
             }
             info = {
-                'title': title
+                'sorttitle': sort_title,
+                'title': actual_title
             }
-            helper.add_item(title,
+            helper.add_item(actual_title,
                             plugin.url_for(catchup_week, uuid=channel_id, title=channel.get('title'), url=channel_logo,
                                            info=info), art=art, info=info, livetv=True)
         helper.eod()
@@ -305,6 +311,7 @@ def epg_tv():
     epg_title = None
     epg_plot = None
     actual_title = None
+    sort_title = None
 
     now = datetime.now()
 
@@ -334,7 +341,6 @@ def epg_tv():
 
     if req.get('data'):
         for channel in req.get('data'):
-            title = channel.get('title')
             avail_in = channel.get('available_in')
             channel_id = channel.get('uuid')
             channel_logo = channel.get('images').get('logo')[0].get('url')
@@ -347,9 +353,10 @@ def epg_tv():
                             epg_plot = epg['plot']
                             break
                     _title = channel.get('title')
-                    title = f'[B]{_title}[/B] | {epg_title}'
-                    catchup_active = f'[LIGHT][CATCHUP][/LIGHT] [B]{_title}[/B] | {epg_title}'
+                    title = f'[B][COLOR orange]{_title}[/COLOR][/B] | [COLOR white]{epg_title}[/COLOR]'
+                    catchup_active = f'[B][COLOR orange]{_title}[/COLOR][/B] [LIGHT][CATCHUP][/LIGHT] [COLOR white]{epg_title}[/COLOR]'
                     actual_title = catchup_active if catch_up_active == 1 else title
+                    sort_title = channel.get('title')
                     break
                 else:
                     for epg in epg_list:
@@ -358,15 +365,17 @@ def epg_tv():
                             epg_plot = epg['plot']
                             break
                     _title = channel.get('title')
-                    title_prefix = '[LIGHT][CATCHUP][/LIGHT] [COLOR red][BRAK][/COLOR]'
-                    title = f'{title_prefix} [B]{_title}[/B] | {epg_title}'
+                    title_prefix = '[COLOR red][BRAK][/COLOR]'
+                    title = f'{title_prefix} [B][COLOR orange]{_title}[/COLOR][/B] [LIGHT][CATCHUP][/LIGHT] [COLOR white]{epg_title}[/COLOR]'
                     catchup_active = f'{title}'
                     actual_title = catchup_active if catch_up_active == 1 else title
+                    sort_title = f'ZZZzzz... {channel.get("title")}'
             art = {
                 'icon': channel_logo,
                 'fanart': channel_logo
             }
             info = {
+                'sorttitle': sort_title,
                 'title': actual_title,
                 'plot': epg_plot
             }
@@ -386,6 +395,9 @@ def list_category(cat_id, slug):
     }
     req = helper.make_request(f'https://{helper.api_subject}/products/channel', method='get',
                               headers=helper.headers, params=query)
+    sort_title = None
+    actual_title = None
+
     if req.get('data'):
         for channel in req.get('data'):
             title = channel.get('title')
@@ -398,23 +410,28 @@ def list_category(cat_id, slug):
             if int(genres_id) == int(cat_id) and genres_slug == slug:
                 for subscriber in helper.subscribers:
                     if subscriber in avail_in:
-                        _title = f'[B]{channel.get("title")}[/B]'
-                        catchup_suffix = _title + ' [COLOR orange](catchup)[/COLOR]'
-                        title = catchup_suffix if catch_up_active == 1 else _title
+                        _title = channel.get('title')
+                        title = f'[B][COLOR orange]{_title}[/COLOR][/B]'
+                        catchup_active = f'[B][COLOR orange]{_title}[/COLOR][/B] [LIGHT][CATCHUP][/LIGHT]'
+                        actual_title = catchup_active if catch_up_active == 1 else title
+                        sort_title = channel.get('title')
                         break
                     else:
                         _title = channel.get('title')
-                        title_prefix = '[COLOR red][BRAK][/COLOR] ' + _title
-                        catchup_suffix = title_prefix + ' (catchup)'
-                        title = catchup_suffix if catch_up_active == 1 else title_prefix
+                        title_prefix = '[COLOR red][BRAK][/COLOR]'
+                        title = f'{title_prefix} [B][COLOR orange]{_title}[/COLOR][/B] [LIGHT][CATCHUP][/LIGHT]'
+                        catchup_active = f'{title}'
+                        actual_title = catchup_active if catch_up_active == 1 else title
+                        sort_title = f'ZZZzzz... {channel.get("title")}'
                 art = {
                     'icon': channel_logo,
                     'fanart': channel_logo
                 }
                 info = {
-                    'title': title
+                    'sorttitle': sort_title,
+                    'title': actual_title
                 }
-                helper.add_item(title,
+                helper.add_item(actual_title,
                                 plugin.url_for(catchup_week, uuid=channel_id, title=channel.get('title'),
                                                url=channel_logo, info=info), art=art, info=info, livetv=True)
         helper.eod()

@@ -87,7 +87,7 @@ class Helper:
         xbmcplugin.addDirectoryItem(self.handle, url, list_item, isFolder=folder)
 
         if livetv:
-            xbmcplugin.addSortMethod(handle=self.handle, sortMethod=xbmcplugin.SORT_METHOD_TITLE)
+            xbmcplugin.addSortMethod(handle=self.handle, sortMethod=xbmcplugin.SORT_METHOD_VIDEO_SORT_TITLE)
 
     def eod(self, cache=True):
         xbmcplugin.endOfDirectory(self.handle, cacheToDisc=cache)
