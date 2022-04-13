@@ -240,6 +240,7 @@ def vod_history():
 def live_tv():
     channels_list = []
     sort_title = None
+    actual_title = None
     helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
     query = {
         'offset': 0,
@@ -354,7 +355,7 @@ def epg_tv():
                             break
                     _title = channel.get('title')
                     title = f'[B][COLOR orange]{_title}[/COLOR][/B] | [COLOR white]{epg_title}[/COLOR]'
-                    catchup_active = f'[B][COLOR orange]{_title}[/COLOR][/B] [LIGHT][CATCHUP][/LIGHT] [COLOR white]{epg_title}[/COLOR]'
+                    catchup_active = f'[COLOR orange][B]{_title}[/B][/COLOR] [LIGHT][CATCHUP][/LIGHT] [COLOR white]{epg_title}[/COLOR]'
                     actual_title = catchup_active if catch_up_active == 1 else title
                     sort_title = channel.get('title')
                     break
@@ -366,8 +367,8 @@ def epg_tv():
                             break
                     _title = channel.get('title')
                     title_prefix = '[COLOR red][BRAK][/COLOR]'
-                    title = f'{title_prefix} [B][COLOR orange]{_title}[/COLOR][/B] [LIGHT][CATCHUP][/LIGHT] [COLOR white]{epg_title}[/COLOR]'
-                    catchup_active = f'{title}'
+                    title = f'{title_prefix} [COLOR orange][B]{_title}[/B][/COLOR] [LIGHT][CATCHUP][/LIGHT] [COLOR white]{epg_title}[/COLOR]'
+                    catchup_active = title
                     actual_title = catchup_active if catch_up_active == 1 else title
                     sort_title = f'ZZZzzz... {channel.get("title")}'
             art = {
