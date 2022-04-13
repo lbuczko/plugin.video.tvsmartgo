@@ -1,3 +1,13 @@
+v1.0.4
+    - Fixed available channels in list
+    - Added VOD playback support
+    - Added TV categories listing
+    - Changed ISA properties and error message for parallel streams
+    - Added error msg for MUST_BE_IN_LOCAL string
+    - Added new TV category with EPG
+    - Improved live TV titles and sort method
+    - Added message to RESOURCE_NOT_IN_SUBSCRIBER_PRODUCTS error
+    - Small fixes
 v1.0.3
     - Remove duplicates from favorites
     - Added option to add live tv channels to favorites
