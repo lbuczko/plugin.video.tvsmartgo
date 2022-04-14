@@ -1,5 +1,7 @@
 import ast
 import sys
+
+import requests
 import routing
 import xbmcvfs
 
@@ -727,20 +729,22 @@ def list_catchup_programs(channel_uuid, day):
 def get_data(product_id, channel_type, videoid=None, catchup=None):
     helper.token = helper.get_setting('token')
     headers = {
-        'Host': 'api.tvonline.vectra.pl',
-        'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0',
-        'accept': 'application/json',
-        'accept-language': 'pl,en-US;q=0.7,en;q=0.3',
-        'access-control-allow-origin': '*',
-        'api-deviceuid': helper.uuid,
-        'api-device': 'Firefox; 90; Windows; 7; Windows; 7;',
-        'authorization': 'Bearer ' + helper.token,
-        'origin': 'https://tvonline.vectra.pl',
-        'referer': 'https://tvonline.vectra.pl/',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-site',
-        'te': 'trailers',
+        'Host': helper.api_subject,
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:99.0) Gecko/20100101 Firefox/99.0',
+        'Accept': '*/*',
+        'Accept-Language': 'pl',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Access-Control-Request-Method': 'GET',
+        'Access-Control-Request-Headers': 'access-control-allow-origin,api-device,api-deviceuid,authorization',
+        'API-DeviceUID': helper.uuid,
+        'Authorization': f'Bearer {helper.token}',
+        'Referer': 'https://tvsmart.vectra.pl/',
+        'Origin': 'https://tvsmart.vectra.pl',
+        'Connection': 'keep-alive',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'cross-site',
+        'TE': 'trailers'
     }
     product_params = {
         'type': channel_type,
@@ -753,6 +757,10 @@ def get_data(product_id, channel_type, videoid=None, catchup=None):
     if catchup:
         product_params.update({'programId': videoid})
 
+    if helper.previous_session:
+        delete_url = f'https://{helper.api_subject}/player/videosession/{helper.previous_session}?platform=BROWSER'
+        requests.delete(delete_url)
+
     url = 'https://api.tvonline.vectra.pl/player/product/%s/configuration' % product_id
     get_product = helper.make_request(url, method='get', headers=headers, params=product_params)
 
@@ -763,6 +771,7 @@ def get_data(product_id, channel_type, videoid=None, catchup=None):
     else:
         if video_session_id:
             video_session_id = video_session_id.get("videoSessionId")
+            helper.set_setting('previous_session', video_session_id)
 
         payload = {
             'type': 'channel',

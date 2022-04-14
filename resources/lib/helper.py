@@ -34,24 +34,30 @@ class Helper:
             self.token = self.set_setting('token', '')
             self.subscribers = self.set_setting('subscribers', '')
             self.uuid = self.create_device_id()
+        try:
+            self.previous_session = self.get_setting('previous_session')
+        except TypeError:
+            self.previous_session = self.set_setting('previous_session', '')
         # API
-        self.api_subject = 'api.tvonline.vectra.pl'
+        self.api_subject = 'api.tvsmart.pl'
         self.headers = {
             'Host': self.api_subject,
-            'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0',
-            'accept': 'application/json',
-            'accept-language': 'pl,en-US;q=0.7,en;q=0.3',
-            'content-type': 'application/json',
-            'access-control-allow-origin': '*',
-            'api-deviceuid': self.uuid,
-            'api-device': 'Firefox; 90; Windows; 7; Windows; 7;',
-            'origin': 'https://tvonline.vectra.pl',
-            'referer': 'https://tvonline.vectra.pl/',
-            'sec-fetch-dest': 'empty',
-            'sec-fetch-mode': 'cors',
-            'sec-fetch-site': 'same-site',
-            'te': 'trailers',
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:99.0) Gecko/20100101 Firefox/99.0',
+            'Accept': 'application/json',
+            'Accept-Language': 'pl',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Access-Control-Allow-Origin': '*',
+            'API-DeviceUID': self.uuid,
+            'API-Device': 'Firefox; 99; Linux; x86_64; Linux; x86_64;',
+            'Origin': f'https://{self.api_subject}',
+            'Connection': 'keep-alive',
+            'Referer': f'https://{self.api_subject}/',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'cross-site',
+            'TE': 'trailers'
         }
+        self.http_session = requests.Session()
 
     def log(self, string):
         msg = f'{self.logging_prefix}: {string}'
@@ -168,18 +174,25 @@ class Helper:
             self.log(f'Headers: {headers}')
 
         if method == 'get':
-            req = requests.get(url, params=params, headers=headers, allow_redirects=allow_redirects, verify=verify)
+            with self.http_session as req:
+                if json:
+                    return req.get(url, params=params, headers=headers, allow_redirects=allow_redirects, verify=verify).json()
+                else:
+                    return req.get(url, params=params, headers=headers, allow_redirects=allow_redirects, verify=verify)
         elif method == 'put':
-            req = requests.put(url, params=params, data=payload, headers=headers, verify=verify)
+            with self.http_session as req:
+                if json:
+                    return req.put(url, params=params, data=payload, headers=headers, verify=verify).json()
+                else:
+                    return req.put(url, params=params, data=payload, headers=headers, verify=verify)
         else:  # post
-            req = requests.post(url, params=params, json=payload, headers=headers)
-        self.log(f'Response code: {req.status_code}')
+            with self.http_session as req:
+                if json:
+                    return req.post(url, params=params, json=payload, headers=headers).json()
+                else:
+                    return req.post(url, params=params, json=payload, headers=headers)
+        # self.log(f'Response code: {req.status_code}')
         # self.log(f'Response: {req.content}')
-
-        if json:
-            return req.json()
-        else:
-            return req
 
     def create_device_id(self):
         dev_id = uuid.uuid1()
