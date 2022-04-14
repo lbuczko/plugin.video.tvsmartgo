@@ -92,6 +92,33 @@ class Helper:
     def eod(self, cache=True):
         xbmcplugin.endOfDirectory(self.handle, cacheToDisc=cache)
 
+    def coloring(self, text, color=None, bold=True):
+        if color == 'red':
+            if bold:
+                return f'[B][COLOR red]{text}[/COLOR][/B]'
+            else:
+                return f'[COLOR red]{text}[/COLOR]'
+        elif color == 'orange':
+            if bold:
+                return f'[B][COLOR orange]{text}[/COLOR][/B]'
+            else:
+                return f'[COLOR orange]{text}[/COLOR]'
+        elif color == 'lightgreen':
+            if bold:
+                return f'[B][COLOR lightgreen]{text}[/COLOR][/B]'
+            else:
+                return f'[COLOR lightgreen]{text}[/COLOR]'
+        elif color == 'white':
+            if bold:
+                return f'[B][COLOR white]{text}[/COLOR][/B]'
+            else:
+                return f'[COLOR white]{text}[/COLOR]'
+        else:
+            if bold:
+                return f'[B]{text}[/B]'
+            else:
+                return text
+
     def notification(self, heading, message):
         xbmcgui.Dialog().notification(heading, message, time=7000)
 
@@ -100,6 +127,16 @@ class Helper:
 
     def dialog_search(self):
         return xbmcgui.Dialog().input('Wyszukiwanie')
+
+    def error_message(self, msg):
+        if msg == 'SUBSCRIBER_PARALLEL_STREAMS_LIMIT_EXCEEDED':
+            return self.notification('Błąd', f'[B]Przekroczono ilość połączeń. Spróbuj ponownie za 10 minut.[/B]')
+        elif msg == 'MUST_BE_IN_LOCAL':
+            return self.notification('Błąd', f'[B]Niedostępne poza siecią Vectra.[/B]')
+        elif msg == 'RESOURCE_NOT_IN_SUBSCRIBER_PRODUCTS':
+            return self.notification('Błąd', f'[B]Nie subskrybujesz tego kanału.[/B]')
+        else:
+            return self.notification('Błąd', f'[B]{msg}[/B]')
 
     def add_favorite(self, channel_name, channel_id, channel_logo):
         file = xbmcvfs.translatePath(f'special://home/userdata/addon_data/{self.addon_name}/favorites.txt')
@@ -117,7 +154,8 @@ class Helper:
         self.notification('Informacja', 'Ulubione usunięte.')
         return True
 
-    def make_request(self, url, method, params=None, payload=None, headers=None, allow_redirects=None, verify=None, json=True):
+    def make_request(self, url, method, params=None, payload=None, headers=None, allow_redirects=None, verify=None,
+                     json=True):
         self.log(f'Request URL: {url}')
         self.log(f'Method: {method}')
         if params:
@@ -260,8 +298,8 @@ class Helper:
                 xbmcplugin.setResolvedUrl(self.handle, True, listitem=play_item)
 
     def return_channels(self):
-        from resources.lib.addon import live_tv
-        return live_tv()
+        from resources.lib.addon import live
+        return live()
 
     def export_m3u_playlist(self):
         file = None
@@ -286,6 +324,49 @@ class Helper:
         finally:
             file.close()
         self.notification('Vectra Smart TV GO', 'Lista m3u wygenerowana')
+
+    def current_day(self):
+        current_day = []
+        date_now = datetime.today()
+
+        start = (date_now - timedelta(days=0)).strftime('%Y%m%d') + '000000'
+        end = (date_now - timedelta(days=-1)).strftime('%Y%m%d') + '000000'
+        current_day.append({
+            'start': start,
+            'end': end
+        })
+        return current_day
+
+    def last_week(self):
+        days_list = []
+        days_range = range(7)
+        archive_day = []
+        date_now = datetime.today()
+
+        for day in days_range:
+            end = (date_now - timedelta(days=day)).strftime('%Y%m%d') + '000000'
+            start = (date_now - timedelta(days=day + 1)).strftime('%Y%m%d') + '000000'
+            archive_day.append({
+                'start': start,
+                'end': end
+            })
+
+        start_days = [(date_now - timedelta(days=idx, hours=-5)).strftime('%Y-%m-%d') for idx in days_range]
+        days = [(date_now - timedelta(days=idx)).strftime('%Y-%m-%d') for idx in days_range]
+        for index in days_range:
+            days_list.append({
+                'day': index,
+                'end': start_days[index],
+                'end_parsed': archive_day[index]['end'],
+                'start': days[index],
+                'start_parsed': archive_day[index]['start']
+            })
+        return days_list
+
+    def string_to_date(self, string, string_format):
+        s_tuple = tuple([int(x) for x in string[:10].split('-')]) + tuple([int(x) for x in string[11:].split(':')])
+        s_to_datetime = datetime(*s_tuple).strftime(string_format)
+        return s_to_datetime
 
     def parse_datetime(self, iso8601_string, localize=False):
         """Parse ISO8601 string to datetime object."""

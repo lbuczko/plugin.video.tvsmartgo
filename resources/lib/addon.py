@@ -1,5 +1,4 @@
 import ast
-import json
 import sys
 import routing
 import xbmcvfs
@@ -45,29 +44,9 @@ def logout():
     helper.user_logout()
 
 
-@plugin.route('/live')
-def live():
-    live_tv()
-
-
-@plugin.route('/epg_live')
-def epg_live():
-    epg_tv()
-
-
-@plugin.route('/tv_categories')
-def tv_categories():
-    list_channel_categories()
-
-
 @plugin.route('/list_category_tv/<cat_id>/<slug>')
 def list_category_tv(cat_id, slug):
     list_category(cat_id, slug)
-
-
-@plugin.route('/live/list_favorites')
-def list_favorites():
-    favorites()
 
 
 @plugin.route('/live/add_favorite')
@@ -147,16 +126,6 @@ def play_vod(uuid):
     get_data(product_id=uuid, channel_type='vod')
 
 
-@plugin.route('/search')
-def search():
-    start_search()
-
-
-@plugin.route('/search_result')
-def search_result():
-    get_search_results()
-
-
 @plugin.route('/settings')
 def open_settings():
     helper.open_settings()
@@ -187,7 +156,7 @@ def vod_active():
 
         expires_at = item.get('expires_at')
 
-        title = f'[B]{_title}[/B] do [COLOR orange]{expires_at}[/COLOR]'
+        title = f'{helper.coloring(_title, "white")} do {helper.coloring(expires_at, "orange", False)}'
 
         info = {
             'title': _title,
@@ -225,8 +194,10 @@ def vod_history():
         created_at = item.get('created_at')
         expiration_date = item.get('expiration_date')
 
-        price = f'[COLOR red][{price:.2f} zł] [/COLOR]'
-        title = f'{price}[B]{_title}[/B] od [COLOR orange]{created_at}[/COLOR] do [COLOR orange]{expiration_date}[/COLOR]'
+        price = f'{helper.coloring(f"[{price:.2f} zł]", "red", False)}'
+        created_at_txt = helper.coloring(created_at, 'orange', False)
+        expiration_date_txt = helper.coloring(expiration_date, 'orange', False)
+        title = f'{price} {helper.coloring(_title, "white")} od {created_at_txt} do {expiration_date_txt}'
 
         info = {
             'title': _title
@@ -237,7 +208,8 @@ def vod_history():
     helper.eod()
 
 
-def live_tv():
+@plugin.route('/live')
+def live():
     channels_list = []
     sort_title = None
     actual_title = None
@@ -252,7 +224,6 @@ def live_tv():
                               headers=helper.headers, params=query)
     if req.get('data'):
         for channel in req.get('data'):
-            title = channel.get('title')
             avail_in = channel.get('available_in')
             channel_id = channel.get('uuid')
             channel_logo = channel.get('images').get('logo')[0].get('url')
@@ -260,8 +231,8 @@ def live_tv():
             for subscriber in helper.subscribers:
                 if subscriber in avail_in:
                     _title = channel.get('title')
-                    title = f'[B][COLOR orange]{_title}[/COLOR][/B]'
-                    catchup_active = f'[B][COLOR orange]{_title}[/COLOR][/B] [LIGHT][CATCHUP][/LIGHT]'
+                    title = f'{helper.coloring(_title, "orange")}'
+                    catchup_active = f'{helper.coloring(_title, "orange")} [LIGHT][CATCHUP][/LIGHT]'
                     actual_title = catchup_active if catch_up_active == 1 else title
                     sort_title = channel.get('title')
                     channels_list.append({
@@ -272,8 +243,8 @@ def live_tv():
                     break
                 else:
                     _title = channel.get('title')
-                    title_prefix = '[COLOR red][BRAK][/COLOR]'
-                    title = f'{title_prefix} [B][COLOR orange]{_title}[/COLOR][/B] [LIGHT][CATCHUP][/LIGHT]'
+                    title_prefix = helper.coloring('[BRAK]', 'red', False)
+                    title = f'{title_prefix} {helper.coloring(_title, "orange")} [LIGHT][CATCHUP][/LIGHT]'
                     catchup_active = f'{title}'
                     actual_title = catchup_active if catch_up_active == 1 else title
                     sort_title = f'ZZZzzz... {channel.get("title")}'
@@ -293,7 +264,8 @@ def live_tv():
     return channels_list
 
 
-def epg_tv():
+@plugin.route('/epg_live')
+def epg_live():
     helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
     query = {
         'offset': 0,
@@ -304,7 +276,7 @@ def epg_tv():
     req = helper.make_request(f'https://{helper.api_subject}/products/channel', method='get',
                               headers=helper.headers, params=query)
 
-    current_day_list = current_day()[0]
+    current_day_list = helper.current_day()[0]
     epg_start = current_day_list['start']
     epg_end = current_day_list['end']
 
@@ -354,8 +326,8 @@ def epg_tv():
                             epg_plot = epg['plot']
                             break
                     _title = channel.get('title')
-                    title = f'[B][COLOR orange]{_title}[/COLOR][/B] | [COLOR white]{epg_title}[/COLOR]'
-                    catchup_active = f'[COLOR orange][B]{_title}[/B][/COLOR] [LIGHT][CATCHUP][/LIGHT] [COLOR white]{epg_title}[/COLOR]'
+                    title = f'{helper.coloring(_title, "orange")} | {helper.coloring(epg_title, "white")}'
+                    catchup_active = f'{helper.coloring(_title, "orange")} [LIGHT][CATCHUP][/LIGHT] {helper.coloring(epg_title, "white")}'
                     actual_title = catchup_active if catch_up_active == 1 else title
                     sort_title = channel.get('title')
                     break
@@ -366,8 +338,8 @@ def epg_tv():
                             epg_plot = epg['plot']
                             break
                     _title = channel.get('title')
-                    title_prefix = '[COLOR red][BRAK][/COLOR]'
-                    title = f'{title_prefix} [COLOR orange][B]{_title}[/B][/COLOR] [LIGHT][CATCHUP][/LIGHT] [COLOR white]{epg_title}[/COLOR]'
+                    title_prefix = helper.coloring('[BRAK]', 'red', False)
+                    title = f'{title_prefix} {helper.coloring(_title, "orange")} [LIGHT][CATCHUP][/LIGHT] {helper.coloring(epg_title, "white")}'
                     catchup_active = title
                     actual_title = catchup_active if catch_up_active == 1 else title
                     sort_title = f'ZZZzzz... {channel.get("title")}'
@@ -412,15 +384,15 @@ def list_category(cat_id, slug):
                 for subscriber in helper.subscribers:
                     if subscriber in avail_in:
                         _title = channel.get('title')
-                        title = f'[B][COLOR orange]{_title}[/COLOR][/B]'
-                        catchup_active = f'[B][COLOR orange]{_title}[/COLOR][/B] [LIGHT][CATCHUP][/LIGHT]'
+                        title = f'{helper.coloring(_title, "orange")}'
+                        catchup_active = f'{helper.coloring(_title, "orange")} [LIGHT][CATCHUP][/LIGHT]'
                         actual_title = catchup_active if catch_up_active == 1 else title
                         sort_title = channel.get('title')
                         break
                     else:
                         _title = channel.get('title')
-                        title_prefix = '[COLOR red][BRAK][/COLOR]'
-                        title = f'{title_prefix} [B][COLOR orange]{_title}[/COLOR][/B] [LIGHT][CATCHUP][/LIGHT]'
+                        title_prefix = helper.coloring('[BRAK]', 'red', False)
+                        title = f'{title_prefix} {helper.coloring(_title, "orange")} [LIGHT][CATCHUP][/LIGHT]'
                         catchup_active = f'{title}'
                         actual_title = catchup_active if catch_up_active == 1 else title
                         sort_title = f'ZZZzzz... {channel.get("title")}'
@@ -438,7 +410,8 @@ def list_category(cat_id, slug):
         helper.eod()
 
 
-def list_channel_categories():
+@plugin.route('/tv_categories')
+def tv_categories():
     helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
     query = {
         'platform': 'BROWSER',
@@ -456,7 +429,8 @@ def list_channel_categories():
     helper.eod()
 
 
-def favorites():
+@plugin.route('/live/list_favorites')
+def list_favorites():
     file = xbmcvfs.translatePath(f'special://home/userdata/addon_data/{helper.addon_name}/favorites.txt')
 
     try:
@@ -502,17 +476,21 @@ def vod_categories(section):
 
 def vod_movies(vod_id, page):
     helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
-    url = f'https://{helper.api_subject}/sections/{vod_id}/content?offset={page}&limit=24&platform=BROWSER&system=tvonline'
+    query = {
+        'platform': 'BROWSER',
+        'system': 'tvonline'
+    }
+    url = f'https://{helper.api_subject}/sections/{vod_id}/content?offset={page}&limit=24'
 
     if 'subtype' and 'genre' in vod_id:
         index = vod_id.replace('genre=', '').replace('subtype=', '')
         subtype, genre = index.split('&')
-        url = f'https://{helper.api_subject}/products/{vod_id}?subtype={subtype}&genre={genre}&limit=24&offset={page}&platform=BROWSER&system=tvonline'
+        url = f'https://{helper.api_subject}/products/{vod_id}?subtype={subtype}&genre={genre}&limit=24&offset={page}'
     elif 'query' in vod_id:
         query = vod_id.split('|')[-1]
-        url = f'https://{helper.api_subject}/products/search?q={query}&limit=100&offset={page}&platform=BROWSER&system=tvonline'
+        url = f'https://{helper.api_subject}/products/search?q={query}&limit=100&offset={page}'
 
-    req = helper.make_request(url, method='get', headers=helper.headers)
+    req = helper.make_request(url, method='get', params=query, headers=helper.headers)
     data = req.get('data')
     for item in data:
         uuid = item.get('uuid')
@@ -522,12 +500,12 @@ def vod_movies(vod_id, page):
             price = item.get('prices').get('rent').get('price')
             period = item.get('prices').get('rent').get('period')
             if price:
-                title_prefix = f'[B][COLOR red][{price / 100}0zł][/COLOR][/B] '
-                title_format = title_prefix + f'[B]{title}[/B]'
-                period = f' [B][COLOR orange]({period}H)[/COLOR][/B]'
-                title = title_format + period
+                title_prefix = f'{helper.coloring(f"[{price / 100}0zł]", "red", False)} '
+                title_format = title_prefix + helper.coloring(title, 'white')
+                period = helper.coloring(f'({period}H)', 'orange', False)
+                title = f'{title_format} {period}'
             else:
-                title = f'[B] {title} [/B]'
+                title = helper.coloring(title)
 
         if item['images'].get('poster'):
             poster = item['images']['poster'][0]['url']
@@ -550,17 +528,21 @@ def vod_movies(vod_id, page):
 
 def tv_shows(vod_id, page):
     helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
-    url = f'https://{helper.api_subject}/sections/{vod_id}/content?offset={page}&limit=24&platform=BROWSER&system=tvonline'
+    query = {
+        'platform': 'BROWSER',
+        'system': 'tvonline'
+    }
+    url = f'https://{helper.api_subject}/sections/{vod_id}/content?offset={page}&limit=24'
 
     if 'subtype' and 'genre' in vod_id:
         index = vod_id.replace('genre=', '').replace('subtype=', '')
         subtype, genre = index.split('&')
-        url = f'https://{helper.api_subject}/products/{vod_id}?subtype={subtype}&genre={genre}&limit=24&offset={page}&platform=BROWSER&system=tvonline'
+        url = f'https://{helper.api_subject}/products/{vod_id}?subtype={subtype}&genre={genre}&limit=24&offset={page}'
     elif 'query' in vod_id:
         query = vod_id.split('|')[-1]
-        url = f'https://{helper.api_subject}/products/search?q={query}&limit=100&offset={page}&platform=BROWSER&system=tvonline'
+        url = f'https://{helper.api_subject}/products/search?q={query}&limit=100&offset={page}'
 
-    req = helper.make_request(url, method='get', headers=helper.headers)
+    req = helper.make_request(url, method='get', params=query, headers=helper.headers)
     data = req.get('data')
     for item in data:
         uuid = item.get('uuid')
@@ -570,12 +552,12 @@ def tv_shows(vod_id, page):
             price = item.get('prices').get('rent').get('price')
             period = item.get('prices').get('rent').get('period')
             if price:
-                title_prefix = f'[B][COLOR red][{price / 100}0zł][/COLOR][/B] '
-                title_format = title_prefix + f'[B]{title}[/B]'
-                period = f' [B][COLOR orange]({period}H)[/COLOR][/B]'
-                title = title_format + period
+                title_prefix = f'{helper.coloring(f"[{price / 100}0zł]", "red", False)} '
+                title_format = title_prefix + helper.coloring(title, 'white')
+                period = helper.coloring(f'({period}H)', 'orange', False)
+                title = f'{title_format} {period}'
             else:
-                title = f'[B] {title} [/B]'
+                title = helper.coloring(title)
         info = {
             'title': title,
             'plot': summary_short
@@ -597,8 +579,12 @@ def tv_shows(vod_id, page):
 
 def show_season_items(uuid):
     helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
-    req_url = f'https://api.tvsmart.pl/products/series/{uuid}?platform=BROWSER&system=tvonline'
-    req = helper.make_request(req_url, method='get', headers=helper.headers)
+    query = {
+        'platform': 'BROWSER',
+        'system': 'tvonline'
+    }
+    req_url = f'https://api.tvsmart.pl/products/series/{uuid}'
+    req = helper.make_request(req_url, method='get', params=query, headers=helper.headers)
 
     for season in req['seasons']:
         uuid = season.get('uuid')
@@ -606,7 +592,7 @@ def show_season_items(uuid):
         if title.endswith(','):
             title = title[:-1] + ''
         number = str(season.get('number'))
-        title = f'[B]{title}[/B] - sezon [{number}]'
+        title = f'{helper.coloring(title)} - sezon [{number}]'
         poster = req['images']['poster'][0]['url']
         summary_long = season.get('summary_long')
         info = {
@@ -623,8 +609,12 @@ def show_season_items(uuid):
 
 def episode_items(uuid):
     helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
-    req_url = f'https://api.tvsmart.pl/products/season/{uuid}?platform=BROWSER&system=tvonline'
-    req = helper.make_request(req_url, method='get', headers=helper.headers)
+    query = {
+        'platform': 'BROWSER',
+        'system': 'tvonline'
+    }
+    req_url = f'https://api.tvsmart.pl/products/season/{uuid}'
+    req = helper.make_request(req_url, method='get', params=query, headers=helper.headers)
 
     for episode in req['episodes']:
         uuid = episode.get('uuid')
@@ -640,8 +630,12 @@ def episode_items(uuid):
 
 def show_movie(uuid):
     helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
-    url = f'https://{helper.api_subject}/products/vod/{uuid}?platform=BROWSER&system=tvonline'
-    req = helper.make_request(url, method='get', headers=helper.headers)
+    query = {
+        'platform': 'BROWSER',
+        'system': 'tvonline'
+    }
+    url = f'https://{helper.api_subject}/products/vod/{uuid}'
+    req = helper.make_request(url, method='get', params=query, headers=helper.headers)
     if not req.get('trailers'):
         helper.notification('Informacja', 'Brak zwiastuna')
     else:
@@ -660,7 +654,7 @@ def show_movie(uuid):
             'title': title,
             'plot': summary_long
         }
-        helper.add_item(title + ' - [COLOR lightgreen][B]trailer[/B][/COLOR]',
+        helper.add_item(title + f' - {helper.coloring("zwiastun", "lightgreen")}',
                         plugin.url_for(play_trailer, uuid, 'vod', req['trailers'][0].get('videoId')), playable=True,
                         info=info, art=art)
         helper.eod()
@@ -676,19 +670,19 @@ def get_catchup(channel_uuid, channel_name, channel_logo, info):
         'icon': channel_logo,
         'fanart': channel_logo
     }
-    helper.add_item(f'{channel_name} - [B][COLOR lightgreen]LIVE[/COLOR][/B]',
+    helper.add_item(f'{channel_name} - {helper.coloring("LIVE", "lightgreen")}',
                     plugin.url_for(channel_data, channel_uuid), playable=True, info=info, art=art)
     helper.add_item('Dodaj kanał do ulubionych',
                     plugin.url_for(add_favorite, channel_name=channel_name, channel_id=channel_uuid,
                                    channel_logo=channel_logo), info=info, art=art)
-    for index, day in enumerate(last_week()):
+    for index, day in enumerate(helper.last_week()):
         helper.add_item(day['end'], plugin.url_for(catchup_programs, channel_uuid=channel_uuid, day=index))
     helper.eod()
 
 
 def list_catchup_programs(channel_uuid, day):
     art = None
-    last_days = last_week()
+    last_days = helper.last_week()
     if int(day) != 0:
         start_date = last_days[int(day) - 1]['start_parsed']
         end_date = last_days[int(day) - 1]['end_parsed']
@@ -709,10 +703,10 @@ def list_catchup_programs(channel_uuid, day):
     for data in response:
         for program in data.get('programs'):
             if program.get('channel_uuid') == channel_uuid:
-                since = string_to_date(program.get('since'), "%m-%d %H:%M")
-                till = string_to_date(program.get('till'), "%H:%M")
-                title_prefix = f'[B][COLOR orange][{since} - {till}][/COLOR][/B] '
-                title = title_prefix + f'[B]{program.get("title")}[/B]'
+                since = helper.string_to_date(program.get('since'), "%m-%d %H:%M")
+                till = helper.string_to_date(program.get('till'), "%H:%M")
+                title_prefix = f'{helper.coloring(f"[{since} - {till}]", "orange")} '
+                title = title_prefix + helper.coloring(program.get("title"), "white", False)
                 cover = program.get('images').get('cover')
                 video_id = program.get('uuid')
                 info = {
@@ -728,52 +722,6 @@ def list_catchup_programs(channel_uuid, day):
                                 plugin.url_for(play_program, channel_id=program.get('channel_uuid'), video_id=video_id),
                                 playable=True, info=info, art=art)
     helper.eod()
-
-
-def current_day():
-    current_day = []
-    date_now = datetime.today()
-
-    start = (date_now - timedelta(days=0)).strftime('%Y%m%d') + '000000'
-    end = (date_now - timedelta(days=-1)).strftime('%Y%m%d') + '000000'
-    current_day.append({
-        'start': start,
-        'end': end
-    })
-    return current_day
-
-
-def last_week():
-    days_list = []
-    days_range = range(7)
-    archive_day = []
-    date_now = datetime.today()
-
-    for day in days_range:
-        end = (date_now - timedelta(days=day)).strftime('%Y%m%d') + '000000'
-        start = (date_now - timedelta(days=day + 1)).strftime('%Y%m%d') + '000000'
-        archive_day.append({
-            'start': start,
-            'end': end
-        })
-
-    start_days = [(date_now - timedelta(days=idx, hours=-5)).strftime('%Y-%m-%d') for idx in days_range]
-    days = [(date_now - timedelta(days=idx)).strftime('%Y-%m-%d') for idx in days_range]
-    for index in days_range:
-        days_list.append({
-            'day': index,
-            'end': start_days[index],
-            'end_parsed': archive_day[index]['end'],
-            'start': days[index],
-            'start_parsed': archive_day[index]['start']
-        })
-    return days_list
-
-
-def string_to_date(string, string_format):
-    s_tuple = tuple([int(x) for x in string[:10].split('-')]) + tuple([int(x) for x in string[11:].split(':')])
-    s_to_datetime = datetime(*s_tuple).strftime(string_format)
-    return s_to_datetime
 
 
 def get_data(product_id, channel_type, videoid=None, catchup=None):
@@ -811,14 +759,7 @@ def get_data(product_id, channel_type, videoid=None, catchup=None):
     video_session_id = get_product.get("videoSession")
     if 'errorCode' in get_product:
         msg = get_product.get('errorCode', None)
-        if msg == 'SUBSCRIBER_PARALLEL_STREAMS_LIMIT_EXCEEDED':
-            helper.notification('Błąd', f'[B]Przekroczono ilość połączeń. Spróbuj ponownie za 10 minut.[/B]')
-        elif msg == 'MUST_BE_IN_LOCAL':
-            helper.notification('Błąd', f'[B]Niedostępne poza siecią Vectra.[/B]')
-        elif msg == 'RESOURCE_NOT_IN_SUBSCRIBER_PRODUCTS':
-            helper.notification('Błąd', f'[B]Nie subskrybujesz tego kanału.[/B]')
-        else:
-            helper.notification('Błąd', f'[B]{msg}[/B]')
+        helper.error_message(msg)
     else:
         if video_session_id:
             video_session_id = video_session_id.get("videoSessionId")
@@ -844,12 +785,14 @@ def get_data(product_id, channel_type, videoid=None, catchup=None):
                 helper.play_video(stream_url=stream_url, drm_protocol=drm_protocol, drm=drm, license_url=license_url)
 
 
-def start_search():
+@plugin.route('/search')
+def search():
     helper.add_item('Nowe wyszukiwanie', plugin.url_for(search_result))
     helper.eod()
 
 
-def get_search_results():
+@plugin.route('/search_result')
+def search_result():
     query = helper.dialog_search()
     helper.headers.update({'authorization': f'Bearer {helper.get_setting("token")}'})
     req_url = f'https://api.tvsmart.pl/products/search'
@@ -865,7 +808,7 @@ def get_search_results():
         data_type = data.get('type')
         uuid = data.get('uuid')
         _title = data.get('title')
-        title = f'[B][COLOR orange][{data_type}][/COLOR][/B] {_title}'
+        title = f'{helper.coloring(data_type, "orange")} {_title}'
         if data_type == 'channel':
             helper.add_item(title, plugin.url_for(channel_data, uuid), playable=True)
         elif data_type == 'vod':
