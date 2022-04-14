@@ -75,12 +75,12 @@ def channel_data(channel_id):
 @plugin.route('/catchup_week')
 def catchup_week():
     get_catchup(channel_uuid=plugin.args['uuid'][0], channel_name=plugin.args['title'][0],
-                channel_logo=plugin.args['url'][0], info=plugin.args['info'][0])
+                channel_logo=plugin.args['url'][0], info=plugin.args['info'][0], catch_up=plugin.args['catch_up'][0])
 
 
-@plugin.route('/catchup_programs/<channel_uuid>/<day>')
-def catchup_programs(channel_uuid, day):
-    list_catchup_programs(channel_uuid, day)
+@plugin.route('/catchup_programs/<channel_uuid>/<day>/<catch_up>')
+def catchup_programs(channel_uuid, day, catch_up):
+    list_catchup_programs(channel_uuid, day, catch_up)
 
 
 @plugin.route('/play_program/<channel_id>/<video_id>')
@@ -260,7 +260,7 @@ def live():
             }
             helper.add_item(actual_title,
                             plugin.url_for(catchup_week, uuid=channel_id, title=channel.get('title'), url=channel_logo,
-                                           info=info), art=art, info=info, livetv=True)
+                                           info=info, catch_up=catch_up_active), art=art, info=info, livetv=True)
         helper.eod()
 
     return channels_list
@@ -356,7 +356,7 @@ def epg_live():
             }
             helper.add_item(actual_title,
                             plugin.url_for(catchup_week, uuid=channel_id, title=channel.get('title'), url=channel_logo,
-                                           info=info), art=art, info=info, livetv=True)
+                                           info=info, catch_up=catch_up_active), art=art, info=info, livetv=True)
         helper.eod()
 
 
@@ -408,7 +408,8 @@ def list_category(cat_id, slug):
                 }
                 helper.add_item(actual_title,
                                 plugin.url_for(catchup_week, uuid=channel_id, title=channel.get('title'),
-                                               url=channel_logo, info=info), art=art, info=info, livetv=True)
+                                               url=channel_logo, info=info, catch_up=catch_up_active), art=art,
+                                info=info, livetv=True)
         helper.eod()
 
 
@@ -662,7 +663,7 @@ def show_movie(uuid):
         helper.eod()
 
 
-def get_catchup(channel_uuid, channel_name, channel_logo, info):
+def get_catchup(channel_uuid, channel_name, channel_logo, info, catch_up):
     info = ast.literal_eval(info)
     info = {
         'title': info['title'],
@@ -678,11 +679,12 @@ def get_catchup(channel_uuid, channel_name, channel_logo, info):
                     plugin.url_for(add_favorite, channel_name=channel_name, channel_id=channel_uuid,
                                    channel_logo=channel_logo), info=info, art=art)
     for index, day in enumerate(helper.last_week()):
-        helper.add_item(day['end'], plugin.url_for(catchup_programs, channel_uuid=channel_uuid, day=index))
+        helper.add_item(day['end'],
+                        plugin.url_for(catchup_programs, channel_uuid=channel_uuid, day=index, catch_up=catch_up))
     helper.eod()
 
 
-def list_catchup_programs(channel_uuid, day):
+def list_catchup_programs(channel_uuid, day, catch_up):
     art = None
     last_days = helper.last_week()
     if int(day) != 0:
@@ -707,7 +709,10 @@ def list_catchup_programs(channel_uuid, day):
             if program.get('channel_uuid') == channel_uuid:
                 since = helper.string_to_date(program.get('since'), "%m-%d %H:%M")
                 till = helper.string_to_date(program.get('till'), "%H:%M")
-                title_prefix = f'{helper.coloring(f"[{since} - {till}]", "orange")} '
+                if int(catch_up) == 1:
+                    title_prefix = f'{helper.coloring(f"[{since} - {till}]", "orange")} '
+                else:
+                    title_prefix = f'[{since} - {till}] '
                 title = title_prefix + helper.coloring(program.get("title"), "white", False)
                 cover = program.get('images').get('cover')
                 video_id = program.get('uuid')
