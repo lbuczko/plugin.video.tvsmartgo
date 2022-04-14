@@ -1,3 +1,8 @@
+v1.0.5
+    - Code cleanup and some fixes
+    - Added error message for CATCHUP_NOT_ACTIVE_FOR_CHANNEL string
+    - Fixed API, requests and video session
+    - Fixed coloring for catchup programs
 v1.0.4
     - Fixed available channels in list
     - Added VOD playback support

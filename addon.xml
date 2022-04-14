@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.tvsmartgo" name="Vectra TV Smart GO" version="1.0.4" provider-name="heppen-dev, zuzia-dev">
+<addon id="plugin.video.tvsmartgo" name="Vectra TV Smart GO" version="1.0.5" provider-name="heppen-dev, zuzia-dev">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="script.module.iso8601" />
@@ -22,7 +22,7 @@
 	<license>MIT</license>
     <website>https://kodi-addons.pl</website>
     <source>https://github.com/heppen-dev/plugin.video.tvsmartgo</source>
-    <news>Fixed available channels in list[CR]Added VOD playback support[CR]Added TV categories listing[CR]Changed ISA properties and error message for parallel streams[CR]Added error msg for MUST_BE_IN_LOCAL string[CR]Added new TV category with EPG[CR]Improved live TV titles and sort method[CR]Added message to RESOURCE_NOT_IN_SUBSCRIBER_PRODUCTS error[CR]Small fixes</news>
+    <news>Code cleanup and some fixes[CR]Added error message for CATCHUP_NOT_ACTIVE_FOR_CHANNEL string[CR]Fixed API, requests and video session[CR]Fixed coloring for catchup programs</news>
     <assets>
         <icon>resources/icon.png</icon>
         <fanart>resources/fanart.jpg</fanart>
