@@ -135,6 +135,8 @@ class Helper:
             return self.notification('Błąd', f'[B]Niedostępne poza siecią Vectra.[/B]')
         elif msg == 'RESOURCE_NOT_IN_SUBSCRIBER_PRODUCTS':
             return self.notification('Błąd', f'[B]Nie subskrybujesz tego kanału.[/B]')
+        elif msg == 'CATCHUP_NOT_ACTIVE_FOR_CHANNEL':
+            return self.notification('Błąd', f'[B]Catchup niedostępny dla tego kanału.[/B]')
         else:
             return self.notification('Błąd', f'[B]{msg}[/B]')
 
