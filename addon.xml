@@ -25,7 +25,7 @@
     <news>Code cleanup and some fixes[CR]Added error message for CATCHUP_NOT_ACTIVE_FOR_CHANNEL string[CR]Fixed API, requests and video session[CR]Fixed coloring for catchup programs</news>
     <assets>
         <icon>resources/icon.png</icon>
-        <fanart>resources/fanart.jpg</fanart>
+        <fanart>resources/fanart.png</fanart>
     </assets>
   </extension>
 </addon>
